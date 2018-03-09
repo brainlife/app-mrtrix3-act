@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ## define number of threads to use
-NCORE=4
+NCORE=8
 
 ##
 ## parse inputs
