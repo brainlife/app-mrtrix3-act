@@ -451,13 +451,9 @@ if [ $DO_FACT == "true" ]; then
 	sh2peaks $fod $pks -num $FACT_DIRS -nthread $NCORE -quiet
 
 	echo "Tracking FACT streamlines at Lmax ${lmax} using ${FACT_DIRS} maximum directions..."
-	tckgen $pks -algorithm FACT \
-	    -select $FACT_FIBS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
-	    -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
-	    wb_FACT_lmax${lmax}.tck -nthreads $NCORE -quiet
-	    
-
-
+	tckgen $pks -algorithm FACT -select $FACT_FIBS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
+	       -minlength $MIN_LENGTH -maxlength $MAX_LENGTH wb_FACT_lmax${lmax}.tck -nthreads $NCORE -quiet
+	
     done
 
 fi
