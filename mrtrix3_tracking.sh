@@ -36,9 +36,10 @@ DO_DETR=`jq -r '.do_detr' config.json`
 DO_DTDT=`jq -r '.do_dtdt' config.json`
 DO_DTPB=`jq -r '.do_dtpb' config.json`
 
-# DO_FACT='true'
-## should FACT even be iterated? could just be a one and done.
-## just give a different count? ndirs + nfibs?
+## FACT kept separately
+DO_FACT=`jq -r '.do_fact' config.json`
+FACT_DIRS=`jq -r '.fact_dirs' config.json`
+FACT_FIBS=`jq -r '.fact_fibs' config.json`
 
 ##
 ## begin execution
@@ -193,13 +194,11 @@ if [ $DO_DETR == "true" ]; then
     done
 fi
 
-# if [ $DO_FACT == "true" ]; then
-#     for lmax in $LMAXS; do
-# 	for curv in $CURVS; do
-# 	    TOTAL=$(($TOTAL+$NUM_FIBERS))
-# 	done
-#     done
-# fi
+if [ $DO_FACT == "true" ]; then
+    for lmax in $LMAXS; do
+	TOTAL=$(($TOTAL+$FACT_FIBS))
+    done
+fi
 
 if [ $DO_DTDT == "true" ]; then
     for curv in $CURVS; do
@@ -426,44 +425,42 @@ if [ $DO_DETR == "true" ]; then
     done
 fi
 
-# if [ $DO_FACT == "true" ]; then
+if [ $DO_FACT == "true" ]; then
 
-#     echo "Tracking FACT streamlines..."
+    echo "Tracking FACT streamlines..."
 
-#     ## create vector to pass for FACT tracking
-#     tensor2metric -vector vector.mif -mask ${mask.mif} dt.mif
-#     ## this would override variation of Lmax (sh2peaks) below
+    ## create vector to pass for FACT tracking
+    #tensor2metric -vector vector.mif -mask ${mask.mif} dt.mif
+    ## this would override variation of Lmax (sh2peaks) below
 
-#     for lmax in $LMAXS; do
+    for lmax in $LMAXS; do
 
-# 	## pick correct FOD for tracking
-# 	if [ $MS -eq 1 ]; then
-# 	    if [ $NORM == 'true' ]; then
-# 		fod=wmt_lmax${lmax}_norm.mif
-# 	    else
-# 		fod=wmt_lmax${lmax}_fod.mif
-# 	    fi
-# 	else
-# 	    fod=csd_lmax${lmax}.mif
-# 	fi
+	## pick correct FOD for tracking
+	if [ $MS -eq 1 ]; then
+	    if [ $NORM == 'true' ]; then
+		fod=wmt_lmax${lmax}_norm.mif
+	    else
+		fod=wmt_lmax${lmax}_fod.mif
+	    fi
+	else
+	    fod=csd_lmax${lmax}.mif
+	fi
 	    
-# 	echo "Extracting peaks from FOD Lmax $lmax for FACT tractography..."
-# 	pks=peaks_lmax$lmax.mif
-# 	sh2peaks $fod $pks -nthread $NCORE -quiet
-	
-# 	for curv in $CURVS; do
+	echo "Extracting $FACT_DIRS peaks from FOD Lmax $lmax for FACT tractography..."
+	pks=peaks_lmax$lmax.mif
+	sh2peaks $fod $pks -num $FACT_DIRS -nthread $NCORE -quiet
 
-# 	    echo "Tracking FACT streamlines at Lmax ${lmax} with a maximum curvature of ${curv} degrees..."
-# 	    tckgen $pks -algorithm FACT \
-# 		   -select $NUM_FIBERS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
-# 		   -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
-# 		   wb_FACT_lmax${lmax}_curv${curv}.tck -nthreads $NCORE -quiet
+	echo "Tracking FACT streamlines at Lmax ${lmax} using ${FACT_DIRS} maximum directions..."
+	tckgen $pks -algorithm FACT \
+	    -select $FACT_FIBS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
+	    -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
+	    wb_FACT_lmax${lmax}.tck -nthreads $NCORE -quiet
 	    
-# 	done
 
-#     done
 
-# fi
+    done
+
+fi
 
 if [ $DO_DTDT == "true" ]; then
 
@@ -507,10 +504,11 @@ echo "Ensemble tractography generated $COUNT of a requested $TOTAL"
 ## if count is wrong, say so / fail / clean for fast re-tracking
 if [ $COUNT -ne $TOTAL ]; then
     echo "Incorrect count. Tractography failed."
-    #rm track.tck
+    #rm -f wb*.tck
+    #rm -f track.tck
 else
     echo "Correct count. Tractography complete."
-    #rm -rf wb*.tck
+    #rm -f wb*.tck
 fi
 
 ## simple summary text
@@ -544,11 +542,6 @@ mrconvert 5ttvis.mif -stride 1,2,3,4 5tt.nii.gz -nthreads $NCORE -quiet
 
 ## clean up
 rm -rf tmp
-
-## FACT - sh2peaks / fod2fixel | fixel2voxel split_dir
-## sh2peaks called on FOD image
-## the angles cannot be varied for this algorithm and still successfully track
-# tckgen -algorithm FACT -select 2500 -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwm_seed.mif csd_lmax2_norm.mif wb.tck
 
 ## can seed cc ROI extra as well
 # tckgen -algorithm iFOD2 -select 10000 -act 5tt.mif -backtrack -crop_at_gmwmi -seed_image cc.mif -grad $grad $FODM cc.tck -nthreads $NCORE -quiet
