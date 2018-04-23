@@ -165,6 +165,23 @@ else
 
 fi
 
+## create repeated lmax argument(s) based on how many shells are found
+
+## create the correct length of lmax
+RMAX=${MAXLMAX}
+iter=1
+
+## for every shell
+while [ $iter -lt $(($NSHELL+1)) ]; do
+    
+    ## add the $MAXLMAX to the argument
+    RMAX=$RMAX,$MAXLMAX
+
+    ## update the iterator
+    iter=$(($iter+1))
+
+done
+
 echo "Tractography will be created on lmax(s): $LMAXS"
 
 ## compute the required size of the final output
@@ -286,9 +303,9 @@ if [ $MS -eq 0 ]; then
     dwi2response tournier ${difm}.mif response.txt -lmax $MAXLMAX -nthreads $NCORE -tempdir ./tmp -quiet
     
 else
-    
+
     echo "Estimating MSMT CSD response function..."
-    dwi2response msmt_5tt ${difm}.mif 5tt.mif wmt.txt gmt.txt csf.txt -mask ${mask}.mif -lmax $MAXLMAX,$MAXLMAX,$MAXLMAX -tempdir ./tmp -nthreads $NCORE -quiet
+    dwi2response msmt_5tt ${difm}.mif 5tt.mif wmt.txt gmt.txt csf.txt -mask ${mask}.mif -lmax $RMAX -tempdir ./tmp -nthreads $NCORE -quiet
 
 fi
 
@@ -313,8 +330,23 @@ else
 
     for lmax in $LMAXS; do
 
+	## create an appropriate number repeated individual lmax calls
+	Rmax=${lmax}
+	iter=1
+
+        ## for every shell
+	while [ $iter -lt $(($NSHELL+1)) ]; do
+    
+            ## add the $lmax to the argument
+	    Rmax=$Rmax,$lmax
+
+            ## update the iterator
+	    iter=$(($iter+1))
+
+	done
+
 	echo "Fitting MSMT CSD FOD of Lmax ${lmax}..."
-	dwi2fod msmt_csd ${difm}.mif wmt.txt wmt_lmax${lmax}_fod.mif gmt.txt gmt_lmax${lmax}_fod.mif csf.txt csf_lmax${lmax}_fod.mif -mask ${mask}.mif -lmax $lmax,$lmax,$lmax -nthreads $NCORE -quiet
+	dwi2fod msmt_csd ${difm}.mif wmt.txt wmt_lmax${lmax}_fod.mif gmt.txt gmt_lmax${lmax}_fod.mif csf.txt csf_lmax${lmax}_fod.mif -mask ${mask}.mif -lmax $Rmax -nthreads $NCORE -quiet
 
 	if [ $NORM == 'true' ]; then
 
