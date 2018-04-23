@@ -53,10 +53,7 @@ anat=t1
 
 ## convert input diffusion data into mrtrix format
 echo "Converting raw data into MRTrix3 format..."
-echo bval: $BVAL
-echo bvec: $BVEC
-echo diff: $DIFF
-mrconvert -fslgrad $BVEC $BVAL $DIFF ${difm}.mif --export_grad_mrtrix ${difm}.b -nthreads $NCORE #-quiet
+mrconvert -fslgrad $BVEC $BVAL $DIFF ${difm}.mif --export_grad_mrtrix ${difm}.b -nthreads $NCORE -quiet
 
 ## create mask of dwi data
 dwi2mask ${difm}.mif ${mask}.mif -nthreads $NCORE -quiet
