@@ -182,6 +182,8 @@ while [ $iter -lt $(($NSHELL+1)) ]; do
 
 done
 
+echo RMAX: $RMAX
+
 echo "Tractography will be created on lmax(s): $LMAXS"
 
 ## compute the required size of the final output
@@ -344,6 +346,8 @@ else
 	    iter=$(($iter+1))
 
 	done
+
+	echo Rmax: $Rmax
 
 	echo "Fitting MSMT CSD FOD of Lmax ${lmax}..."
 	dwi2fod msmt_csd ${difm}.mif wmt.txt wmt_lmax${lmax}_fod.mif gmt.txt gmt_lmax${lmax}_fod.mif csf.txt csf_lmax${lmax}_fod.mif -mask ${mask}.mif -lmax $Rmax -nthreads $NCORE -quiet
