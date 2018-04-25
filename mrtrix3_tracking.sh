@@ -332,25 +332,25 @@ else
 
     for lmax in $LMAXS; do
 
-	## create an appropriate number repeated individual lmax calls
-	Rmax=${lmax}
-	iter=1
+	# ## create an appropriate number repeated individual lmax calls
+	# Rmax=${lmax}
+	# iter=1
 
-        ## for every shell
-	while [ $iter -lt $(($NSHELL+1)) ]; do
+        # ## for every shell
+	# while [ $iter -lt $(($NSHELL+1)) ]; do
     
-            ## add the $lmax to the argument
-	    Rmax=$Rmax,$lmax
+        #     ## add the $lmax to the argument
+	#     Rmax=$Rmax,$lmax
 
-            ## update the iterator
-	    iter=$(($iter+1))
+        #     ## update the iterator
+	#     iter=$(($iter+1))
 
-	done
+	# done
 
-	echo Rmax: $Rmax
+	# echo Rmax: $Rmax
 
 	echo "Fitting MSMT CSD FOD of Lmax ${lmax}..."
-	dwi2fod msmt_csd ${difm}.mif wmt.txt wmt_lmax${lmax}_fod.mif gmt.txt gmt_lmax${lmax}_fod.mif csf.txt csf_lmax${lmax}_fod.mif -mask ${mask}.mif -lmax $Rmax -nthreads $NCORE -quiet
+	dwi2fod msmt_csd ${difm}.mif wmt.txt wmt_lmax${lmax}_fod.mif gmt.txt gmt_lmax${lmax}_fod.mif csf.txt csf_lmax${lmax}_fod.mif -mask ${mask}.mif -lmax $lmax,$lmax,$lmax -nthreads $NCORE -quiet
 
 	if [ $NORM == 'true' ]; then
 
