@@ -527,7 +527,7 @@ if [ $DO_DTPB == "true" ]; then
 fi
 
 ## combine different parameters into 1 output
-tckedit *.tck track.tck -nthreads $NCORE -quiet
+tckedit wb*.tck track.tck -nthreads $NCORE -quiet
 
 ## find the final size
 COUNT=`tckinfo track.tck | grep -w 'count' | awk '{print $2}'`
