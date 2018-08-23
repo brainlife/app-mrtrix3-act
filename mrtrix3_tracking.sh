@@ -67,13 +67,13 @@ dwiextract ${difm}.mif - -bzero -nthreads $NCORE -quiet | mrmath - mean b0.mif -
 ## check if b0 volume successfully created
 if [ ! -f b0.mif ]; then
     echo "No b-zero volumes present."
-    NSHELL=`mrinfo -shells ${difm}.mif | wc -w`
+    NSHELL=`mrinfo -shell_bvalues ${difm}.mif | wc -w`
     NB0s=0
     EB0=''
 else
-    ISHELL=`mrinfo -shells ${difm}.mif | wc -w`
+    ISHELL=`mrinfo -shell_bvalues ${difm}.mif | wc -w`
     NSHELL=$(($ISHELL-1))
-    NB0s=`mrinfo -shellcounts ${difm}.mif | awk '{print $1}'`
+    NB0s=`mrinfo -shell_sizes ${difm}.mif | awk '{print $1}'`
     EB0="0,"
 fi
 
@@ -85,7 +85,7 @@ else
     MS=0
     echo "Single-shell data: $NSHELL shell"
     if [ ! -z "$TENSOR_FIT" ]; then
-	echo "Ignoring requested tensor shell. All data will be fit and tracked on the same b-bvalue."
+	echo "Ignoring requested tensor shell. All data will be fit and tracked on the same b-value."
     fi
 fi
 
@@ -93,8 +93,8 @@ fi
 echo Number of b0s: $NB0s 
 
 ## extract the shells and # of volumes per shell
-BVALS=`mrinfo -shells ${difm}.mif`
-COUNTS=`mrinfo -shellcounts ${difm}.mif`
+BVALS=`mrinfo -shell_bvalues ${difm}.mif`
+COUNTS=`mrinfo -shell_sizes ${difm}.mif`
 
 ## echo basic shell count summaries
 echo -n "Shell b-values: "; echo $BVALS
@@ -332,23 +332,6 @@ else
 
     for lmax in $LMAXS; do
 
-	# ## create an appropriate number repeated individual lmax calls
-	# Rmax=${lmax}
-	# iter=1
-
-        # ## for every shell
-	# while [ $iter -lt $(($NSHELL+1)) ]; do
-    
-        #     ## add the $lmax to the argument
-	#     Rmax=$Rmax,$lmax
-
-        #     ## update the iterator
-	#     iter=$(($iter+1))
-
-	# done
-
-	# echo Rmax: $Rmax
-
 	echo "Fitting MSMT CSD FOD of Lmax ${lmax}..."
 	dwi2fod msmt_csd ${difm}.mif wmt.txt wmt_lmax${lmax}_fod.mif gmt.txt gmt_lmax${lmax}_fod.mif csf.txt csf_lmax${lmax}_fod.mif -mask ${mask}.mif -lmax $lmax,$lmax,$lmax -nthreads $NCORE -quiet
 
@@ -536,11 +519,11 @@ echo "Ensemble tractography generated $COUNT of a requested $TOTAL"
 ## if count is wrong, say so / fail / clean for fast re-tracking
 if [ $COUNT -ne $TOTAL ]; then
     echo "Incorrect count. Tractography failed."
-    #rm -f wb*.tck
-    #rm -f track.tck
+    rm -f wb*.tck
+    rm -f track.tck
 else
     echo "Correct count. Tractography complete."
-    #rm -f wb*.tck
+    rm -f wb*.tck
 fi
 
 ## simple summary text
