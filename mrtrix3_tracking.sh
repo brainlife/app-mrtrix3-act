@@ -557,6 +557,7 @@ mrconvert 5ttvis.mif -stride 1,2,3,4 5tt.nii.gz -nthreads $NCORE -quiet
 
 ## clean up
 rm -rf tmp
+rm -rf *.mif
 
 ## can seed cc ROI extra as well
 # tckgen -algorithm iFOD2 -select 10000 -act 5tt.mif -backtrack -crop_at_gmwmi -seed_image cc.mif -grad $grad $FODM cc.tck -nthreads $NCORE -quiet
