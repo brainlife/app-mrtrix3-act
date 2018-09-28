@@ -182,8 +182,6 @@ while [ $iter -lt $(($NSHELL+1)) ]; do
 
 done
 
-echo RMAX: $RMAX
-
 echo "Tractography will be created on lmax(s): $LMAXS"
 
 ## compute the required size of the final output
@@ -521,6 +519,7 @@ if [ $COUNT -ne $TOTAL ]; then
     echo "Incorrect count. Tractography failed."
     rm -f wb*.tck
     rm -f track.tck
+    exit
 else
     echo "Correct count. Tractography complete."
     rm -f wb*.tck
