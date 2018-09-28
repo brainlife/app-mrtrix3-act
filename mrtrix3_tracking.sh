@@ -168,7 +168,11 @@ fi
 ## create repeated lmax argument(s) based on how many shells are found
 
 ## create the correct length of lmax
-RMAX=${MAXLMAX}
+if [ $NB0s -eq 0 ]; then
+    RMAX=${MAXLMAX}
+else
+    RMAX=0
+fi
 iter=1
 
 ## for every shell
@@ -181,6 +185,8 @@ while [ $iter -lt $(($NSHELL+1)) ]; do
     iter=$(($iter+1))
 
 done
+
+echo RMAX: $RMAX
 
 echo "Tractography will be created on lmax(s): $LMAXS"
 
@@ -519,7 +525,7 @@ if [ $COUNT -ne $TOTAL ]; then
     echo "Incorrect count. Tractography failed."
     rm -f wb*.tck
     rm -f track.tck
-    exit
+    exit 1
 else
     echo "Correct count. Tractography complete."
     rm -f wb*.tck
