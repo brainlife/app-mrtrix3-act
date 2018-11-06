@@ -562,6 +562,9 @@ fi
 ## 5 tissue type visualization
 mrconvert 5ttvis.mif -stride 1,2,3,4 5tt.nii.gz -nthreads $NCORE -quiet
 
+## convert mask
+mrconvert ${mask}.mif -stride 1,2,3,4 mask.nii.gz -nthreads $NCORE -quiet
+
 ## clean up
 rm -rf tmp
 rm -rf *.mif
