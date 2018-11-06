@@ -3,6 +3,10 @@
 ## define number of threads to use
 NCORE=8
 
+## export more log messages
+set -x
+set -e
+
 ##
 ## parse inputs
 ##
@@ -175,7 +179,7 @@ else
 fi
 iter=1
 
-## for every shell
+## for every shell (after starting w/ b0), add the max lmax to estimate
 while [ $iter -lt $(($NSHELL+1)) ]; do
     
     ## add the $MAXLMAX to the argument
@@ -185,8 +189,6 @@ while [ $iter -lt $(($NSHELL+1)) ]; do
     iter=$(($iter+1))
 
 done
-
-echo RMAX: $RMAX
 
 echo "Tractography will be created on lmax(s): $LMAXS"
 
@@ -564,12 +566,12 @@ mrconvert 5ttvis.mif -stride 1,2,3,4 5tt.nii.gz -nthreads $NCORE -quiet
 rm -rf tmp
 rm -rf *.mif
 
-## can seed cc ROI extra as well
+## can seed cc ROI extra as well if FreeSufer is passed and the ROI is made
 # tckgen -algorithm iFOD2 -select 10000 -act 5tt.mif -backtrack -crop_at_gmwmi -seed_image cc.mif -grad $grad $FODM cc.tck -nthreads $NCORE -quiet
 
 ## curvature is an angle, not a number
-## these are interconverted by:
+## the radius/angle conversion is:
 ## https://www.nitrc.org/pipermail/mrtrix-discussion/2011-June/000230.html
 # angle = 2 * asin (S / (2*R))
-# R = curvature
-# S = step-size
+# R = curvature (.25-2)
+# S = step-size (0.2 by defualt in MRTrix 0.2.12)
