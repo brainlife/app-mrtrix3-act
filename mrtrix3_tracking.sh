@@ -50,7 +50,7 @@ FACT_FIBS=`jq -r '.fact_fibs' config.json`
 ##
 
 ## working directory labels
-mkdir ./tmp
+mkdir -p tmp
 difm=dwi
 mask=mask
 anat=t1
