@@ -50,20 +50,23 @@ FACT_FIBS=`jq -r '.fact_fibs' config.json`
 ##
 
 ## working directory labels
+rm -rf ./tmp
 mkdir ./tmp
+
+## define working file names
 difm=dwi
 mask=mask
 anat=t1
 
 ## convert input diffusion data into mrtrix format
 echo "Converting raw data into MRTrix3 format..."
-mrconvert -fslgrad $BVEC $BVAL $DIFF ${difm}.mif --export_grad_mrtrix ${difm}.b -nthreads $NCORE -quiet
+mrconvert -fslgrad $BVEC $BVAL $DIFF ${difm}.mif --export_grad_mrtrix ${difm}.b -force -nthreads $NCORE -quiet
 
 ## create mask of dwi data
-dwi2mask ${difm}.mif ${mask}.mif -nthreads $NCORE -quiet
+dwi2mask ${difm}.mif ${mask}.mif -force -nthreads $NCORE -quiet
 
 ## convert anatomy
-mrconvert $ANAT ${anat}.mif -nthreads $NCORE -quiet
+mrconvert $ANAT ${anat}.mif -force -nthreads $NCORE -quiet
 
 ## create b0 
 dwiextract ${difm}.mif - -bzero -nthreads $NCORE -quiet | mrmath - mean b0.mif -axis 3 -nthreads $NCORE -quiet
@@ -249,7 +252,7 @@ if [ ! -z $TENSOR_FIT ]; then
     if [ ! -z $TFE ]; then
 	echo "Requested b-value for fitting the tensor, $TENSOR_FIT, exists within the data."
 	echo "Extracting b-${TENSOR_FIT} shell for tensor fit..."    
-	dwiextract ${difm}.mif ${difm}_ten.mif -bzero -shell ${EB0}${TENSOR_FIT} -nthreads $NCORE -quiet
+	dwiextract ${difm}.mif ${difm}_ten.mif -bzero -shell ${EB0}${TENSOR_FIT} -force -nthreads $NCORE -quiet
 	dift=${difm}_ten
     else
 	echo "Requested b-value for fitting the tensor, $TENSOR_FIT, does not exist within the data."
@@ -270,7 +273,7 @@ if [ $MS -eq 0 ]; then
 
     ## estimate single shell tensor
     echo "Fitting tensor model..."
-    dwi2tensor -mask ${mask}.mif ${dift}.mif dt.mif -bvalue_scaling false -nthreads $NCORE -quiet
+    dwi2tensor -mask ${mask}.mif ${dift}.mif dt.mif -bvalue_scaling false -force -nthreads $NCORE -quiet
 
 else
 
@@ -279,41 +282,41 @@ else
 
 	## fit the requested single shell tensor for the multishell data
 	echo "Fitting single-shell b-value $TENSOR_FIT tensor model..."
-	dwi2tensor -mask ${mask}.mif ${dift}.mif dt.mif -bvalue_scaling false -nthreads $NCORE -quiet
+	dwi2tensor -mask ${mask}.mif ${dift}.mif dt.mif -bvalue_scaling false -force -nthreads $NCORE -quiet
 
     else
 
 	## estimate multishell tensor w/ kurtosis and b-value scaling
 	echo "Fitting multi-shell tensor model..."
-	dwi2tensor -mask ${mask}.mif ${dift}.mif -dkt dk.mif dt.mif -bvalue_scaling true -nthreads $NCORE -quiet
+	dwi2tensor -mask ${mask}.mif ${dift}.mif -dkt dk.mif dt.mif -bvalue_scaling true -force -nthreads $NCORE -quiet
 
     fi
 
 fi
 
 ## create tensor metrics either way
-tensor2metric -mask ${mask}.mif -adc md.mif -fa fa.mif -ad ad.mif -rd rd.mif -cl cl.mif -cp cp.mif -cs cs.mif dt.mif -nthreads $NCORE -quiet
+tensor2metric -mask ${mask}.mif -adc md.mif -fa fa.mif -ad ad.mif -rd rd.mif -cl cl.mif -cp cp.mif -cs cs.mif dt.mif -force -nthreads $NCORE -quiet
 
 echo "Creating 5-Tissue-Type (5TT) tracking mask..."
 
 ## convert anatomy 
-5ttgen fsl ${anat}.mif 5tt.mif -nocrop -sgm_amyg_hipp -tempdir ./tmp -nthreads $NCORE -quiet
+5ttgen fsl ${anat}.mif 5tt.mif -nocrop -sgm_amyg_hipp -tempdir ./tmp -force -nthreads $NCORE -quiet
 
 ## generate gm-wm interface seed mask
-5tt2gmwmi 5tt.mif gmwmi_seed.mif -nthreads $NCORE -quiet
+5tt2gmwmi 5tt.mif gmwmi_seed.mif -force -nthreads $NCORE -quiet
 
 ## create visualization output
-5tt2vis 5tt.mif 5ttvis.mif -nthreads $NCORE -quiet
+5tt2vis 5tt.mif 5ttvis.mif -force -nthreads $NCORE -quiet
 
 if [ $MS -eq 0 ]; then
 
     echo "Estimating CSD response function..."
-    dwi2response tournier ${difm}.mif response.txt -lmax $MAXLMAX -nthreads $NCORE -tempdir ./tmp -quiet
+    dwi2response tournier ${difm}.mif response.txt -lmax $MAXLMAX -force -nthreads $NCORE -tempdir ./tmp -quiet
     
 else
 
     echo "Estimating MSMT CSD response function..."
-    dwi2response msmt_5tt ${difm}.mif 5tt.mif wmt.txt gmt.txt csf.txt -mask ${mask}.mif -lmax $RMAX -tempdir ./tmp -nthreads $NCORE -quiet
+    dwi2response msmt_5tt ${difm}.mif 5tt.mif wmt.txt gmt.txt csf.txt -mask ${mask}.mif -lmax $RMAX -tempdir ./tmp -force -nthreads $NCORE -quiet
 
 fi
 
@@ -323,7 +326,7 @@ if [ $MS -eq 0 ]; then
     for lmax in $LMAXS; do
 
 	echo "Fitting CSD FOD of Lmax ${lmax}..."
-	dwi2fod -mask ${mask}.mif csd ${difm}.mif response.txt csd_lmax${lmax}.mif -lmax $lmax -nthreads $NCORE -quiet
+	dwi2fod -mask ${mask}.mif csd ${difm}.mif response.txt csd_lmax${lmax}.mif -lmax $lmax -force -nthreads $NCORE -quiet
 
 	## intensity normalization of CSD fit
 	# if [ $NORM == 'true' ]; then
@@ -339,12 +342,12 @@ else
     for lmax in $LMAXS; do
 
 	echo "Fitting MSMT CSD FOD of Lmax ${lmax}..."
-	dwi2fod msmt_csd ${difm}.mif wmt.txt wmt_lmax${lmax}_fod.mif gmt.txt gmt_lmax${lmax}_fod.mif csf.txt csf_lmax${lmax}_fod.mif -mask ${mask}.mif -lmax $lmax,$lmax,$lmax -nthreads $NCORE -quiet
+	dwi2fod msmt_csd ${difm}.mif wmt.txt wmt_lmax${lmax}_fod.mif gmt.txt gmt_lmax${lmax}_fod.mif csf.txt csf_lmax${lmax}_fod.mif -mask ${mask}.mif -lmax $lmax,$lmax,$lmax -force -nthreads $NCORE -quiet
 
 	if [ $NORM == 'true' ]; then
 
 	    echo "Performing multi-tissue intensity normalization on Lmax $lmax..."
-	    mtnormalise -mask ${mask}.mif wmt_lmax${lmax}_fod.mif wmt_lmax${lmax}_norm.mif gmt_lmax${lmax}_fod.mif gmt_lmax${lmax}_norm.mif csf_lmax${lmax}_fod.mif csf_lmax${lmax}_norm.mif -nthreads $NCORE -quiet
+	    mtnormalise -mask ${mask}.mif wmt_lmax${lmax}_fod.mif wmt_lmax${lmax}_norm.mif gmt_lmax${lmax}_fod.mif gmt_lmax${lmax}_norm.mif csf_lmax${lmax}_fod.mif csf_lmax${lmax}_norm.mif -force -nthreads $NCORE -quiet
 
 	    ## check for failure / continue w/o exiting
 	    if [ -z wmt_lmax${lmax}_norm.mif ]; then
@@ -384,7 +387,7 @@ if [ $DO_PRB2 == "true" ]; then
 	    tckgen $fod -algorithm iFOD2 \
 		   -select $NUM_FIBERS -act 5tt.mif -backtrack -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
 		   -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
-		   wb_iFOD2_lmax${lmax}_curv${curv}.tck -nthreads $NCORE -quiet
+		   wb_iFOD2_lmax${lmax}_curv${curv}.tck -force -nthreads $NCORE -quiet
 	    
 	done
     done
@@ -414,7 +417,7 @@ if [ $DO_PRB1 == "true" ]; then
 	    tckgen $fod -algorithm iFOD1 \
 		   -select $NUM_FIBERS -act 5tt.mif -backtrack -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
 		   -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
-		   wb_iFOD1_lmax${lmax}_curv${curv}.tck -nthreads $NCORE -quiet
+		   wb_iFOD1_lmax${lmax}_curv${curv}.tck -force -nthreads $NCORE -quiet
 	    
 	done
     done
@@ -444,7 +447,7 @@ if [ $DO_DETR == "true" ]; then
 	    tckgen $fod -algorithm SD_STREAM \
 		   -select $NUM_FIBERS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
 		   -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
-		   wb_SD_STREAM_lmax${lmax}_curv${curv}.tck -nthreads $NCORE -quiet
+		   wb_SD_STREAM_lmax${lmax}_curv${curv}.tck -force -nthreads $NCORE -quiet
 	    
 	done
     done
@@ -477,7 +480,7 @@ if [ $DO_FACT == "true" ]; then
 
 	echo "Tracking FACT streamlines at Lmax ${lmax} using ${FACT_DIRS} maximum directions..."
 	tckgen $pks -algorithm FACT -select $FACT_FIBS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
-	       -minlength $MIN_LENGTH -maxlength $MAX_LENGTH wb_FACT_lmax${lmax}.tck -nthreads $NCORE -quiet
+	       -minlength $MIN_LENGTH -maxlength $MAX_LENGTH wb_FACT_lmax${lmax}.tck -force -nthreads $NCORE -quiet
 	
     done
 
@@ -493,7 +496,7 @@ if [ $DO_DTDT == "true" ]; then
 	tckgen ${difm}.mif -algorithm Tensor_Det \
 	       -select $NUM_FIBERS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
 	       -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
-	       wb_Tensor_Det_curv${curv}.tck -nthreads $NCORE -quiet
+	       wb_Tensor_Det_curv${curv}.tck -force -nthreads $NCORE -quiet
 	
     done
 
@@ -509,14 +512,14 @@ if [ $DO_DTPB == "true" ]; then
 	tckgen ${difm}.mif -algorithm Tensor_Prob \
 	       -select $NUM_FIBERS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
 	       -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
-	       wb_Tensor_Prob_curv${curv}.tck -nthreads $NCORE -quiet
+	       wb_Tensor_Prob_curv${curv}.tck -force -nthreads $NCORE -quiet
 	    
     done
 
 fi
 
 ## combine different parameters into 1 output
-tckedit wb*.tck track.tck -nthreads $NCORE -quiet
+tckedit wb*.tck track.tck -force -nthreads $NCORE -quiet
 
 ## find the final size
 COUNT=`tckinfo track.tck | grep -w 'count' | awk '{print $2}'`
@@ -541,36 +544,36 @@ tckinfo track.tck > tckinfo.txt
 ##
 
 ## tensor outputs
-mrconvert fa.mif -stride 1,2,3,4 fa.nii.gz -nthreads $NCORE -quiet
-mrconvert md.mif -stride 1,2,3,4 md.nii.gz -nthreads $NCORE -quiet
-mrconvert ad.mif -stride 1,2,3,4 ad.nii.gz -nthreads $NCORE -quiet
-mrconvert rd.mif -stride 1,2,3,4 rd.nii.gz -nthreads $NCORE -quiet
+mrconvert fa.mif -stride 1,2,3,4 fa.nii.gz -force -nthreads $NCORE -quiet
+mrconvert md.mif -stride 1,2,3,4 md.nii.gz -force -nthreads $NCORE -quiet
+mrconvert ad.mif -stride 1,2,3,4 ad.nii.gz -force -nthreads $NCORE -quiet
+mrconvert rd.mif -stride 1,2,3,4 rd.nii.gz -force -nthreads $NCORE -quiet
 
 ## westin shapes (also tensor)
-mrconvert cl.mif -stride 1,2,3,4 cl.nii.gz -nthreads $NCORE -quiet
-mrconvert cp.mif -stride 1,2,3,4 cp.nii.gz -nthreads $NCORE -quiet
-mrconvert cs.mif -stride 1,2,3,4 cs.nii.gz -nthreads $NCORE -quiet
+mrconvert cl.mif -stride 1,2,3,4 cl.nii.gz -force -nthreads $NCORE -quiet
+mrconvert cp.mif -stride 1,2,3,4 cp.nii.gz -force -nthreads $NCORE -quiet
+mrconvert cs.mif -stride 1,2,3,4 cs.nii.gz -force -nthreads $NCORE -quiet
 
 ## tensor itself
-mrconvert dt.mif -stride 1,2,3,4 tensor.nii.gz -nthreads $NCORE -quiet
+mrconvert dt.mif -stride 1,2,3,4 tensor.nii.gz -force -nthreads $NCORE -quiet
 
 ## kurtosis, if it exists
 if [ -f dk.mif ]; then
-    mrconvert dk.mif -stride 1,2,3,4 kurtosis.nii.gz -nthreads $NCORE -quiet
+    mrconvert dk.mif -stride 1,2,3,4 kurtosis.nii.gz -force -nthreads $NCORE -quiet
 fi
 
 ## 5 tissue type visualization
-mrconvert 5ttvis.mif -stride 1,2,3,4 5tt.nii.gz -nthreads $NCORE -quiet
+mrconvert 5ttvis.mif -stride 1,2,3,4 5tt.nii.gz -force -nthreads $NCORE -quiet
 
 ## convert mask
-mrconvert ${mask}.mif -stride 1,2,3,4 mask.nii.gz -nthreads $NCORE -quiet
+mrconvert ${mask}.mif -stride 1,2,3,4 mask.nii.gz -force -nthreads $NCORE -quiet
 
 ## clean up
 rm -rf tmp
 rm -rf *.mif
 
 ## can seed cc ROI extra as well if FreeSufer is passed and the ROI is made
-# tckgen -algorithm iFOD2 -select 10000 -act 5tt.mif -backtrack -crop_at_gmwmi -seed_image cc.mif -grad $grad $FODM cc.tck -nthreads $NCORE -quiet
+# tckgen -algorithm iFOD2 -select 10000 -act 5tt.mif -backtrack -crop_at_gmwmi -seed_image cc.mif -grad $grad $FODM cc.tck -force -nthreads $NCORE -quiet
 
 ## curvature is an angle, not a number
 ## the radius/angle conversion is:
