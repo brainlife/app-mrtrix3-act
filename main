@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l nodes=1:ppn=8,vmem=32gb,walltime=06:00:00
+#PBS -l nodes=1:ppn=8,vmem=32gb,walltime=09:00:00
 #PBS -N mrtrix3_act
 #PBS -V
 
