@@ -546,13 +546,15 @@ tckinfo track.tck > tckinfo.txt
 for lmax in $LMAXS; do
     
     if [ $NORM == 'true' ]; then
-	mrconvert wmt_lmax${$lmax}_fod.mif -stride 1,2,3,4 csd_lmax${lmax}.nii.gz -force -nthreads $NCORE -quiet
+	mrconvert wmt_lmax${lmax}_norm.mif -stride 1,2,3,4 csd_lmax${lmax}.nii.gz -force -nthreads $NCORE -quiet
     else
-	mrconvert wmt_lmax${$lmax}_norm.mif -stride 1,2,3,4 csd_lmax${lmax}.nii.gz -force -nthreads $NCORE -quiet
+	mrconvert wmt_lmax${lmax}_fod.mif -stride 1,2,3,4 csd_lmax${lmax}.nii.gz -force -nthreads $NCORE -quiet
     fi
 
 done
-    
+
+cp wmt.txt response.txt
+
 ## tensor outputs
 mrconvert fa.mif -stride 1,2,3,4 fa.nii.gz -force -nthreads $NCORE -quiet
 mrconvert md.mif -stride 1,2,3,4 md.nii.gz -force -nthreads $NCORE -quiet
