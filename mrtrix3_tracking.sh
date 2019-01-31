@@ -311,7 +311,7 @@ echo "Creating 5-Tissue-Type (5TT) tracking mask..."
 if [ $MS -eq 0 ]; then
 
     echo "Estimating CSD response function..."
-    dwi2response tournier ${difm}.mif response.txt -lmax $MAXLMAX -force -nthreads $NCORE -tempdir ./tmp -quiet
+    dwi2response tournier ${difm}.mif wmt.txt -lmax $MAXLMAX -force -nthreads $NCORE -tempdir ./tmp -quiet
     
 else
 
@@ -326,7 +326,7 @@ if [ $MS -eq 0 ]; then
     for lmax in $LMAXS; do
 
 	echo "Fitting CSD FOD of Lmax ${lmax}..."
-	dwi2fod -mask ${mask}.mif csd ${difm}.mif response.txt csd_lmax${lmax}.mif -lmax $lmax -force -nthreads $NCORE -quiet
+	dwi2fod -mask ${mask}.mif csd ${difm}.mif wmt.txt wmt_lmax${lmax}_fod.mif -lmax $lmax -force -nthreads $NCORE -quiet
 
 	## intensity normalization of CSD fit
 	# if [ $NORM == 'true' ]; then
@@ -378,7 +378,7 @@ if [ $DO_PRB2 == "true" ]; then
 		fod=wmt_lmax${lmax}_fod.mif
 	    fi
 	else
-	    fod=csd_lmax${lmax}.mif
+	    fod=wmt_lmax${lmax}.mif
 	fi
 	
 	for curv in $CURVS; do
@@ -408,7 +408,7 @@ if [ $DO_PRB1 == "true" ]; then
 		fod=wmt_lmax${lmax}_fod.mif
 	    fi
 	else
-	    fod=csd_lmax${lmax}.mif
+	    fod=wmt_lmax${lmax}.mif
 	fi
 
 	for curv in $CURVS; do
@@ -438,7 +438,7 @@ if [ $DO_DETR == "true" ]; then
 		fod=wmt_lmax${lmax}_fod.mif
 	    fi
 	else
-	    fod=csd_lmax${lmax}.mif
+	    fod=wmt_lmax${lmax}.mif
 	fi
 
 	for curv in $CURVS; do
@@ -471,7 +471,7 @@ if [ $DO_FACT == "true" ]; then
 		fod=wmt_lmax${lmax}_fod.mif
 	    fi
 	else
-	    fod=csd_lmax${lmax}.mif
+	    fod=wmt_lmax${lmax}.mif
 	fi
 	    
 	echo "Extracting $FACT_DIRS peaks from FOD Lmax $lmax for FACT tractography..."
@@ -543,6 +543,16 @@ tckinfo track.tck > tckinfo.txt
 ## convert outputs to save to nifti
 ##
 
+for lmax in $LMAXS; do
+    
+    if [ $NORM == 'true' ]; then
+	mrconvert wmt_lmax${$lmax}_fod.mif -stride 1,2,3,4 csd_lmax${lmax}.nii.gz -force -nthreads $NCORE -quiet
+    else
+	mrconvert wmt_lmax${$lmax}_norm.mif -stride 1,2,3,4 csd_lmax${lmax}.nii.gz -force -nthreads $NCORE -quiet
+    fi
+
+done
+    
 ## tensor outputs
 mrconvert fa.mif -stride 1,2,3,4 fa.nii.gz -force -nthreads $NCORE -quiet
 mrconvert md.mif -stride 1,2,3,4 md.nii.gz -force -nthreads $NCORE -quiet
@@ -563,7 +573,8 @@ if [ -f dk.mif ]; then
 fi
 
 ## 5 tissue type visualization
-mrconvert 5ttvis.mif -stride 1,2,3,4 5tt.nii.gz -force -nthreads $NCORE -quiet
+mrconvert 5ttvis.mif -stride 1,2,3,4 5ttvis.nii.gz -force -nthreads $NCORE -quiet
+mrconvert 5tt.mif -stride 1,2,3,4 5tt.nii.gz -force -nthreads $NCORE -quiet
 
 ## 5 tissue type visualization
 mrconvert ${mask}.mif -stride 1,2,3,4 mask.nii.gz -force -nthreads $NCORE -quiet
