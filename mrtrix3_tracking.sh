@@ -378,7 +378,7 @@ if [ $DO_PRB2 == "true" ]; then
 		fod=wmt_lmax${lmax}_fod.mif
 	    fi
 	else
-	    fod=wmt_lmax${lmax}.mif
+	    fod=wmt_lmax${lmax}_fod.mif
 	fi
 	
 	for curv in $CURVS; do
@@ -408,7 +408,7 @@ if [ $DO_PRB1 == "true" ]; then
 		fod=wmt_lmax${lmax}_fod.mif
 	    fi
 	else
-	    fod=wmt_lmax${lmax}.mif
+	    fod=wmt_lmax${lmax}_fod.mif
 	fi
 
 	for curv in $CURVS; do
@@ -438,7 +438,7 @@ if [ $DO_DETR == "true" ]; then
 		fod=wmt_lmax${lmax}_fod.mif
 	    fi
 	else
-	    fod=wmt_lmax${lmax}.mif
+	    fod=wmt_lmax${lmax}_fod.mif
 	fi
 
 	for curv in $CURVS; do
@@ -471,7 +471,7 @@ if [ $DO_FACT == "true" ]; then
 		fod=wmt_lmax${lmax}_fod.mif
 	    fi
 	else
-	    fod=wmt_lmax${lmax}.mif
+	    fod=wmt_lmax${lmax}_fod.mif
 	fi
 	    
 	echo "Extracting $FACT_DIRS peaks from FOD Lmax $lmax for FACT tractography..."
