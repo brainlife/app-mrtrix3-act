@@ -391,37 +391,38 @@ if [ $DO_PRB2 == "true" ]; then
 	    
 	done
     done
-fi
-
-if [ $DO_PRB1 == "true" ]; then
-
-    ## MRTrix 0.2.12 probabilistic
-    echo "Tracking iFOD1 streamlines..."
     
-    for lmax in $LMAXS; do
-
-	## pick correct FOD for tracking
-	if [ $MS -eq 1 ]; then
-	    if [ $NORM == 'true' ]; then
-		fod=wmt_lmax${lmax}_norm.mif
-	    else
-		fod=wmt_lmax${lmax}_fod.mif
-	    fi
-	else
-	    fod=wmt_lmax${lmax}_fod.mif
-	fi
-
-	for curv in $CURVS; do
-
-	    echo "Tracking iFOD1 streamlines at Lmax ${lmax} with a maximum curvature of ${curv} degrees..."
-	    tckgen $fod -algorithm iFOD1 \
-		   -select $NUM_FIBERS -act 5tt.mif -backtrack -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
-		   -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
-		   wb_iFOD1_lmax${lmax}_curv${curv}.tck -force -nthreads $NCORE -quiet
-	    
-	done
-    done
 fi
+
+# if [ $DO_PRB1 == "true" ]; then
+
+#     ## MRTrix 0.2.12 probabilistic
+#     echo "Tracking iFOD1 streamlines..."
+    
+#     for lmax in $LMAXS; do
+
+# 	## pick correct FOD for tracking
+# 	if [ $MS -eq 1 ]; then
+# 	    if [ $NORM == 'true' ]; then
+# 		fod=wmt_lmax${lmax}_norm.mif
+# 	    else
+# 		fod=wmt_lmax${lmax}_fod.mif
+# 	    fi
+# 	else
+# 	    fod=wmt_lmax${lmax}_fod.mif
+# 	fi
+
+# 	for curv in $CURVS; do
+
+# 	    echo "Tracking iFOD1 streamlines at Lmax ${lmax} with a maximum curvature of ${curv} degrees..."
+# 	    tckgen $fod -algorithm iFOD1 \
+# 		   -select $NUM_FIBERS -act 5tt.mif -backtrack -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
+# 		   -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
+# 		   wb_iFOD1_lmax${lmax}_curv${curv}.tck -force -nthreads $NCORE -quiet
+	    
+# 	done
+#     done
+# fi
 
 if [ $DO_DETR == "true" ]; then
 
@@ -453,73 +454,89 @@ if [ $DO_DETR == "true" ]; then
     done
 fi
 
-if [ $DO_FACT == "true" ]; then
+# if [ $DO_FACT == "true" ]; then
 
-    echo "Tracking FACT streamlines..."
+#     echo "Tracking FACT streamlines..."
 
-    ## create vector to pass for FACT tracking
-    #tensor2metric -vector vector.mif -mask ${mask.mif} dt.mif
-    ## this would override variation of Lmax (sh2peaks) below
+#     ## create vector to pass for FACT tracking
+#     #tensor2metric -vector vector.mif -mask ${mask.mif} dt.mif
+#     ## this would override variation of Lmax (sh2peaks) below
 
-    for lmax in $LMAXS; do
+#     for lmax in $LMAXS; do
 
-	## pick correct FOD for tracking
-	if [ $MS -eq 1 ]; then
-	    if [ $NORM == 'true' ]; then
-		fod=wmt_lmax${lmax}_norm.mif
-	    else
-		fod=wmt_lmax${lmax}_fod.mif
-	    fi
-	else
-	    fod=wmt_lmax${lmax}_fod.mif
-	fi
+# 	## pick correct FOD for tracking
+# 	if [ $MS -eq 1 ]; then
+# 	    if [ $NORM == 'true' ]; then
+# 		fod=wmt_lmax${lmax}_norm.mif
+# 	    else
+# 		fod=wmt_lmax${lmax}_fod.mif
+# 	    fi
+# 	else
+# 	    fod=wmt_lmax${lmax}_fod.mif
+# 	fi
 	    
-	echo "Extracting $FACT_DIRS peaks from FOD Lmax $lmax for FACT tractography..."
-	pks=peaks_lmax$lmax.mif
-	sh2peaks $fod $pks -num $FACT_DIRS -nthread $NCORE -quiet
+# 	echo "Extracting $FACT_DIRS peaks from FOD Lmax $lmax for FACT tractography..."
+# 	pks=peaks_lmax$lmax.mif
+# 	sh2peaks $fod $pks -num $FACT_DIRS -nthread $NCORE -quiet
 
-	echo "Tracking FACT streamlines at Lmax ${lmax} using ${FACT_DIRS} maximum directions..."
-	tckgen $pks -algorithm FACT -select $FACT_FIBS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
-	       -minlength $MIN_LENGTH -maxlength $MAX_LENGTH wb_FACT_lmax${lmax}.tck -force -nthreads $NCORE -quiet
+# 	echo "Tracking FACT streamlines at Lmax ${lmax} using ${FACT_DIRS} maximum directions..."
+# 	tckgen $pks -algorithm FACT -select $FACT_FIBS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
+# 	       -minlength $MIN_LENGTH -maxlength $MAX_LENGTH wb_FACT_lmax${lmax}.tck -force -nthreads $NCORE -quiet
 	
-    done
+#     done
 
-fi
+# fi
 
-if [ $DO_DTDT == "true" ]; then
+# if [ $DO_DTDT == "true" ]; then
 
-    echo "Tracking deterministic tensor streamlines..."
+#     echo "Tracking deterministic tensor streamlines..."
     
-    for curv in $CURVS; do
+#     for curv in $CURVS; do
 
-	echo "Tracking deterministic tensor streamlines with a maximum curvature of ${curv} degrees..."
-	tckgen ${difm}.mif -algorithm Tensor_Det \
-	       -select $NUM_FIBERS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
-	       -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
-	       wb_Tensor_Det_curv${curv}.tck -force -nthreads $NCORE -quiet
+# 	echo "Tracking deterministic tensor streamlines with a maximum curvature of ${curv} degrees..."
+# 	tckgen ${difm}.mif -algorithm Tensor_Det \
+# 	       -select $NUM_FIBERS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
+# 	       -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
+# 	       wb_Tensor_Det_curv${curv}.tck -force -nthreads $NCORE -quiet
 	
-    done
+#     done
 
-fi
+# fi
 
-if [ $DO_DTPB == "true" ]; then
+# if [ $DO_DTPB == "true" ]; then
 
-    echo "Tracking probabilistic tensor streamlines..."
+#     echo "Tracking probabilistic tensor streamlines..."
     
-    for curv in $CURVS; do
+#     for curv in $CURVS; do
 
-	echo "Tracking probabilistic tensor streamlines at with a maximum curvature of ${curv} degrees..."
-	tckgen ${difm}.mif -algorithm Tensor_Prob \
-	       -select $NUM_FIBERS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
-	       -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
-	       wb_Tensor_Prob_curv${curv}.tck -force -nthreads $NCORE -quiet
+# 	echo "Tracking probabilistic tensor streamlines at with a maximum curvature of ${curv} degrees..."
+# 	tckgen ${difm}.mif -algorithm Tensor_Prob \
+# 	       -select $NUM_FIBERS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
+# 	       -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
+# 	       wb_Tensor_Prob_curv${curv}.tck -force -nthreads $NCORE -quiet
 	    
-    done
+#     done
 
-fi
+# fi
+
+## merge across all of the lmax
+for lmax in $LMAXS; do
+
+    echo "Merging all streamlines for Lmax ${lmax} to perform sift..."
+    
+    ## merge into combined curvature lmax
+    tckedit wb*lmax${lmax}*.tck wb_lmax${lmax}_presift.tck -force -nthreads $NCORE -quiet
+
+    ## remove all the 
+    rm wb*lmax${lmax}*.tck
+    
+    ## run sift
+    tcksift -term_number 125000 -act 5tt.mif -fd_scale_gm wb_lmax${lmax}_presift.tck wmt_lmax${lmax}_fod.mif wb_lmax${lmax}_sift.tck -nthread $NCORE -quiet
+
+done
 
 ## combine different parameters into 1 output
-tckedit wb*.tck track.tck -force -nthreads $NCORE -quiet
+tckedit wb*sift.tck track.tck -force -nthreads $NCORE -quiet
 
 ## find the final size
 COUNT=`tckinfo track.tck | grep -w 'count' | awk '{print $2}'`
