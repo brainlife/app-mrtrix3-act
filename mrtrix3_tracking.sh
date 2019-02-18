@@ -268,34 +268,34 @@ else
     
 fi    
 
-## fit the tensor
-if [ $MS -eq 0 ]; then
+# ## fit the tensor
+# if [ $MS -eq 0 ]; then
 
-    ## estimate single shell tensor
-    echo "Fitting tensor model..."
-    dwi2tensor -mask ${mask}.mif ${dift}.mif dt.mif -bvalue_scaling false -force -nthreads $NCORE -quiet
+#     ## estimate single shell tensor
+#     echo "Fitting tensor model..."
+#     dwi2tensor -mask ${mask}.mif ${dift}.mif dt.mif -bvalue_scaling false -force -nthreads $NCORE -quiet
 
-else
+# else
 
-    ## if single shell tensor is requested, fit it
-    if [ ! -z $TENSOR_FIT ]; then
+#     ## if single shell tensor is requested, fit it
+#     if [ ! -z $TENSOR_FIT ]; then
 
-	## fit the requested single shell tensor for the multishell data
-	echo "Fitting single-shell b-value $TENSOR_FIT tensor model..."
-	dwi2tensor -mask ${mask}.mif ${dift}.mif dt.mif -bvalue_scaling false -force -nthreads $NCORE -quiet
+# 	## fit the requested single shell tensor for the multishell data
+# 	echo "Fitting single-shell b-value $TENSOR_FIT tensor model..."
+# 	dwi2tensor -mask ${mask}.mif ${dift}.mif dt.mif -bvalue_scaling false -force -nthreads $NCORE -quiet
 
-    else
+#     else
 
-	## estimate multishell tensor w/ kurtosis and b-value scaling
-	echo "Fitting multi-shell tensor model..."
-	dwi2tensor -mask ${mask}.mif ${dift}.mif -dkt dk.mif dt.mif -bvalue_scaling true -force -nthreads $NCORE -quiet
+# 	## estimate multishell tensor w/ kurtosis and b-value scaling
+# 	echo "Fitting multi-shell tensor model..."
+# 	dwi2tensor -mask ${mask}.mif ${dift}.mif -dkt dk.mif dt.mif -bvalue_scaling true -force -nthreads $NCORE -quiet
 
-    fi
+#     fi
 
-fi
+# fi
 
 ## create tensor metrics either way
-tensor2metric -mask ${mask}.mif -adc md.mif -fa fa.mif -ad ad.mif -rd rd.mif -cl cl.mif -cp cp.mif -cs cs.mif dt.mif -force -nthreads $NCORE -quiet
+#tensor2metric -mask ${mask}.mif -adc md.mif -fa fa.mif -ad ad.mif -rd rd.mif -cl cl.mif -cp cp.mif -cs cs.mif dt.mif -force -nthreads $NCORE -quiet
 
 echo "Creating 5-Tissue-Type (5TT) tracking mask..."
 
@@ -306,7 +306,7 @@ echo "Creating 5-Tissue-Type (5TT) tracking mask..."
 5tt2gmwmi 5tt.mif gmwmi_seed.mif -force -nthreads $NCORE -quiet
 
 ## create visualization output
-5tt2vis 5tt.mif 5ttvis.mif -force -nthreads $NCORE -quiet
+#5tt2vis 5tt.mif 5ttvis.mif -force -nthreads $NCORE -quiet
 
 if [ $MS -eq 0 ]; then
 
@@ -390,6 +390,15 @@ if [ $DO_PRB2 == "true" ]; then
 		   wb_iFOD2_lmax${lmax}_curv${curv}.tck -force -nthreads $NCORE -quiet
 	    
 	done
+	
+	echo "Merging all streamlines for Lmax ${lmax} to perform sift..."
+
+	## merge into combined curvature lmax
+	tckedit wb_iFOD2_lmax${lmax}_curv*.tck wb_iFOD2_lmax${lmax}_presift.tck -force -nthreads $NCORE -quiet
+
+	## remove all the individual streamline files
+	rm wb_iFOD2_lmax${lmax}_curv*.tck
+
     done
     
 fi
@@ -451,6 +460,15 @@ if [ $DO_DETR == "true" ]; then
 		   wb_SD_STREAM_lmax${lmax}_curv${curv}.tck -force -nthreads $NCORE -quiet
 	    
 	done
+	
+	echo "Merging all streamlines for Lmax ${lmax} to perform sift..."
+
+	## merge into combined curvature lmax
+	tckedit wb_SD_STREAM_lmax${lmax}_curv*.tck wb_SD_STREAM_lmax${lmax}_presift.tck -force -nthreads $NCORE -quiet
+
+	## remove all the individual streamline files
+	rm wb_SD_STREAM_lmax${lmax}_curv*.tck
+
     done
 fi
 
@@ -519,21 +537,24 @@ fi
 
 # fi
 
+echo "Performing SIFT..."
+
 ## merge across all of the lmax
 for lmax in $LMAXS; do
 
-    echo "Merging all streamlines for Lmax ${lmax} to perform sift..."
+    echo "Performing SIFT on Lmax ${lmax}..."
     
-    ## merge into combined curvature lmax
-    tckedit wb*lmax${lmax}*.tck wb_lmax${lmax}_presift.tck -force -nthreads $NCORE -quiet
-
-    ## remove all the 
-    rm wb*lmax${lmax}*.tck
+    tckedit wb*lmax${lmax}_presift.tck presift_lmax${lmax}.tck
     
     ## run sift
-    tcksift -term_number 125000 -act 5tt.mif -fd_scale_gm wb_lmax${lmax}_presift.tck wmt_lmax${lmax}_fod.mif wb_lmax${lmax}_sift.tck -nthread $NCORE -quiet
+    tcksift -term_number 125000 -act 5tt.mif -fd_scale_gm presift_lmax${lmax}.tck wmt_lmax${lmax}_fod.mif wb_lmax${lmax}_sift.tck -nthread $NCORE -quiet
 
+    ## clear generated
+    rm presift_lmax${lmax}.tck
+    
 done
+
+echo "Merging all streamlines into final output..."
 
 ## combine different parameters into 1 output
 tckedit wb*sift.tck track.tck -force -nthreads $NCORE -quiet
@@ -543,15 +564,17 @@ COUNT=`tckinfo track.tck | grep -w 'count' | awk '{print $2}'`
 echo "Ensemble tractography generated $COUNT of a requested $TOTAL"
 
 ## if count is wrong, say so / fail / clean for fast re-tracking
-if [ $COUNT -ne $TOTAL ]; then
-    echo "Incorrect count. Tractography failed."
-    rm -f wb*.tck
-    rm -f track.tck
-    exit 1
-else
-    echo "Correct count. Tractography complete."
-    rm -f wb*.tck
-fi
+# if [ $COUNT -ne $TOTAL ]; then
+#     echo "Incorrect count. Tractography failed."
+#     rm -f wb*.tck
+#     rm -f track.tck
+#     exit 1
+# else
+#     echo "Correct count. Tractography complete."
+#     rm -f wb*.tck
+# fi
+
+rm -f wb*.tck
 
 ## simple summary text
 tckinfo track.tck > tckinfo.txt
@@ -560,43 +583,43 @@ tckinfo track.tck > tckinfo.txt
 ## convert outputs to save to nifti
 ##
 
-for lmax in $LMAXS; do
+# for lmax in $LMAXS; do
     
-    if [ $NORM == 'true' ]; then
-	mrconvert wmt_lmax${lmax}_norm.mif -stride 1,2,3,4 lmax${lmax}.nii.gz -force -nthreads $NCORE -quiet
-    else
-	mrconvert wmt_lmax${lmax}_fod.mif -stride 1,2,3,4 lmax${lmax}.nii.gz -force -nthreads $NCORE -quiet
-    fi
+#     if [ $NORM == 'true' ]; then
+# 	mrconvert wmt_lmax${lmax}_norm.mif -stride 1,2,3,4 lmax${lmax}.nii.gz -force -nthreads $NCORE -quiet
+#     else
+# 	mrconvert wmt_lmax${lmax}_fod.mif -stride 1,2,3,4 lmax${lmax}.nii.gz -force -nthreads $NCORE -quiet
+#     fi
 
-done
+# done
 
-cp wmt.txt response.txt
+# cp wmt.txt response.txt
 
-## tensor outputs
-mrconvert fa.mif -stride 1,2,3,4 fa.nii.gz -force -nthreads $NCORE -quiet
-mrconvert md.mif -stride 1,2,3,4 md.nii.gz -force -nthreads $NCORE -quiet
-mrconvert ad.mif -stride 1,2,3,4 ad.nii.gz -force -nthreads $NCORE -quiet
-mrconvert rd.mif -stride 1,2,3,4 rd.nii.gz -force -nthreads $NCORE -quiet
+# ## tensor outputs
+# mrconvert fa.mif -stride 1,2,3,4 fa.nii.gz -force -nthreads $NCORE -quiet
+# mrconvert md.mif -stride 1,2,3,4 md.nii.gz -force -nthreads $NCORE -quiet
+# mrconvert ad.mif -stride 1,2,3,4 ad.nii.gz -force -nthreads $NCORE -quiet
+# mrconvert rd.mif -stride 1,2,3,4 rd.nii.gz -force -nthreads $NCORE -quiet
 
-## westin shapes (also tensor)
-mrconvert cl.mif -stride 1,2,3,4 cl.nii.gz -force -nthreads $NCORE -quiet
-mrconvert cp.mif -stride 1,2,3,4 cp.nii.gz -force -nthreads $NCORE -quiet
-mrconvert cs.mif -stride 1,2,3,4 cs.nii.gz -force -nthreads $NCORE -quiet
+# ## westin shapes (also tensor)
+# mrconvert cl.mif -stride 1,2,3,4 cl.nii.gz -force -nthreads $NCORE -quiet
+# mrconvert cp.mif -stride 1,2,3,4 cp.nii.gz -force -nthreads $NCORE -quiet
+# mrconvert cs.mif -stride 1,2,3,4 cs.nii.gz -force -nthreads $NCORE -quiet
 
-## tensor itself
-mrconvert dt.mif -stride 1,2,3,4 tensor.nii.gz -force -nthreads $NCORE -quiet
+# ## tensor itself
+# mrconvert dt.mif -stride 1,2,3,4 tensor.nii.gz -force -nthreads $NCORE -quiet
 
-## kurtosis, if it exists
-if [ -f dk.mif ]; then
-    mrconvert dk.mif -stride 1,2,3,4 kurtosis.nii.gz -force -nthreads $NCORE -quiet
-fi
+# ## kurtosis, if it exists
+# if [ -f dk.mif ]; then
+#     mrconvert dk.mif -stride 1,2,3,4 kurtosis.nii.gz -force -nthreads $NCORE -quiet
+# fi
 
-## 5 tissue type visualization
-mrconvert 5ttvis.mif -stride 1,2,3,4 5ttvis.nii.gz -force -nthreads $NCORE -quiet
-mrconvert 5tt.mif -stride 1,2,3,4 5tt.nii.gz -force -nthreads $NCORE -quiet
+# ## 5 tissue type visualization
+# mrconvert 5ttvis.mif -stride 1,2,3,4 5ttvis.nii.gz -force -nthreads $NCORE -quiet
+# mrconvert 5tt.mif -stride 1,2,3,4 5tt.nii.gz -force -nthreads $NCORE -quiet
 
-## 5 tissue type visualization
-mrconvert ${mask}.mif -stride 1,2,3,4 mask.nii.gz -force -nthreads $NCORE -quiet
+# ## 5 tissue type visualization
+# mrconvert ${mask}.mif -stride 1,2,3,4 mask.nii.gz -force -nthreads $NCORE -quiet
 
 ## clean up
 rm -rf tmp
