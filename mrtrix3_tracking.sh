@@ -362,6 +362,9 @@ else
     
 fi
 
+## remove unused FOD maps to save disk space
+rm -f csf*fod.mif gmt*fod.mif
+
 echo "Performing Anatomically Constrained Tractography (ACT)..."
 
 if [ $DO_PRB2 == "true" ]; then
