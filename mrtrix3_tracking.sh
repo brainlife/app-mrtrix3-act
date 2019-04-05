@@ -311,12 +311,12 @@ echo "Creating 5-Tissue-Type (5TT) tracking mask..."
 if [ $MS -eq 0 ]; then
 
     echo "Estimating CSD response function..."
-    dwi2response tournier ${difm}.mif wmt.txt -lmax $MAXLMAX -force -nthreads $NCORE -tempdir ./tmp -quiet
+    time dwi2response tournier ${difm}.mif wmt.txt -lmax $MAXLMAX -force -nthreads $NCORE -tempdir ./tmp -quiet
     
 else
 
     echo "Estimating MSMT CSD response function..."
-    dwi2response msmt_5tt ${difm}.mif 5tt.mif wmt.txt gmt.txt csf.txt -mask ${mask}.mif -lmax $RMAX -tempdir ./tmp -force -nthreads $NCORE -quiet
+    time dwi2response msmt_5tt ${difm}.mif 5tt.mif wmt.txt gmt.txt csf.txt -mask ${mask}.mif -lmax $RMAX -tempdir ./tmp -force -nthreads $NCORE -quiet
 
 fi
 
@@ -326,7 +326,7 @@ if [ $MS -eq 0 ]; then
     for lmax in $LMAXS; do
 
 	echo "Fitting CSD FOD of Lmax ${lmax}..."
-	dwi2fod -mask ${mask}.mif csd ${difm}.mif wmt.txt wmt_lmax${lmax}_fod.mif -lmax $lmax -force -nthreads $NCORE -quiet
+	time dwi2fod -mask ${mask}.mif csd ${difm}.mif wmt.txt wmt_lmax${lmax}_fod.mif -lmax $lmax -force -nthreads $NCORE -quiet
 
 	## intensity normalization of CSD fit
 	# if [ $NORM == 'true' ]; then
@@ -342,7 +342,7 @@ else
     for lmax in $LMAXS; do
 
 	echo "Fitting MSMT CSD FOD of Lmax ${lmax}..."
-	dwi2fod msmt_csd ${difm}.mif wmt.txt wmt_lmax${lmax}_fod.mif gmt.txt gmt_lmax${lmax}_fod.mif csf.txt csf_lmax${lmax}_fod.mif -mask ${mask}.mif -lmax $lmax,$lmax,$lmax -force -nthreads $NCORE -quiet
+	time dwi2fod msmt_csd ${difm}.mif wmt.txt wmt_lmax${lmax}_fod.mif gmt.txt gmt_lmax${lmax}_fod.mif csf.txt csf_lmax${lmax}_fod.mif -mask ${mask}.mif -lmax $lmax,$lmax,$lmax -force -nthreads $NCORE -quiet
 
 	if [ $NORM == 'true' ]; then
 
