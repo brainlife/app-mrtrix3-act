@@ -4,7 +4,7 @@
 if [ "$(jq .num_fibers -r config.json)" -gt 30000 ]; then
     walltime=36:00:00
 else
-    walltime=06:00:00
+    walltime=08:00:00
 fi
 
 echo "#PBS -l nodes=1:ppn=8,vmem=16gb"
