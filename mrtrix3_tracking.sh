@@ -69,18 +69,18 @@ dwi2mask ${difm}.mif ${mask}.mif -force -nthreads $NCORE -quiet
 mrconvert $ANAT ${anat}.mif -force -nthreads $NCORE -quiet
 
 ## create b0 
-dwiextract ${difm}.mif - -bzero -nthreads $NCORE -quiet | mrmath - mean b0.mif -axis 3 -force -nthreads $NCORE -quiet
+dwiextract ${difm}.mif - -bzero -bvalue_scaling false -nthreads $NCORE -quiet | mrmath - mean b0.mif -axis 3 -force -nthreads $NCORE -quiet
 
 ## check if b0 volume successfully created
 if [ ! -f b0.mif ]; then
     echo "No b-zero volumes present."
-    NSHELL=`mrinfo -shell_bvalues ${difm}.mif | wc -w`
+    NSHELL=`mrinfo -shell_bvalues -bvalue_scaling false ${difm}.mif | wc -w`
     NB0s=0
     EB0=''
 else
-    ISHELL=`mrinfo -shell_bvalues ${difm}.mif | wc -w`
+    ISHELL=`mrinfo -shell_bvalues -bvalue_scaling false ${difm}.mif | wc -w`
     NSHELL=$(($ISHELL-1))
-    NB0s=`mrinfo -shell_sizes ${difm}.mif | awk '{print $1}'`
+    NB0s=`mrinfo -shell_sizes -bvalue_scaling false ${difm}.mif | awk '{print $1}'`
     EB0="0,"
 fi
 
@@ -100,15 +100,15 @@ fi
 echo Number of b0s: $NB0s 
 
 ## extract the shells and # of volumes per shell
-BVALS=`mrinfo -shell_bvalues ${difm}.mif`
-COUNTS=`mrinfo -shell_sizes ${difm}.mif`
+BVALS=`mrinfo -shell_bvalues -bvalue_scaling false ${difm}.mif`
+COUNTS=`mrinfo -shell_sizes -bvalue_scaling false ${difm}.mif`
 
 ## echo basic shell count summaries
 echo -n "Shell b-values: "; echo $BVALS
 echo -n "Unique Counts:  "; echo $COUNTS
 
 ## echo max lmax per shell
-MLMAXS=`dirstat ${difm}.b | grep lmax | awk '{print $8}' | sed "s|:||g"`
+MLMAXS=`dirstat ${difm}.b -bvalue_scaling false | grep lmax | awk '{print $8}' | sed "s|:||g"`
 echo -n "Maximum Lmax:   "; echo $MLMAXS
 
 ## find maximum lmax that can be computed within data
@@ -252,7 +252,7 @@ if [ ! -z $TENSOR_FIT ]; then
     if [ ! -z $TFE ]; then
 	echo "Requested b-value for fitting the tensor, $TENSOR_FIT, exists within the data."
 	echo "Extracting b-${TENSOR_FIT} shell for tensor fit..."    
-	dwiextract ${difm}.mif ${difm}_ten.mif -bzero -shell ${EB0}${TENSOR_FIT} -force -nthreads $NCORE -quiet
+	dwiextract ${difm}.mif ${difm}_ten.mif -bzero -shell ${EB0}${TENSOR_FIT} -bvalue_scaling false -force -nthreads $NCORE -quiet
 	dift=${difm}_ten
     else
 	echo "Requested b-value for fitting the tensor, $TENSOR_FIT, does not exist within the data."
