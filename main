@@ -5,10 +5,3 @@
 
 echo "Tracking data..."
 time singularity exec -e docker://brainlife/mrtrix3:3.0_RC3 ./mrtrix3_tracking.sh
-
-## check for the output for success
-if [ ! -f track.tck ]; then
-    echo "Final tractography file missing."
-    exit 1
-fi
-
