@@ -384,11 +384,17 @@ if [ $DO_PRB2 == "true" ]; then
 	for curv in $CURVS; do
 
 	    echo "Tracking iFOD2 streamlines at Lmax ${lmax} with a maximum curvature of ${curv} degrees..."
-	    tckgen $fod -algorithm iFOD2 \
+	    timeout 3600 tckgen $fod -algorithm iFOD2 \
 		   -select $NUM_FIBERS -act 5tt.mif -backtrack -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
-		   -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
+		   -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH -seeds 0 -max_attempts_per_seed 500 \
 		   wb_iFOD2_lmax${lmax}_curv${curv}.tck -force -nthreads $NCORE -quiet
-	    
+
+	    exit_status=$?
+	    if [[ $exit_status -eq 124 ]]; then
+		echo "iFOD2 Probabilistic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
+		exit 1
+	    fi
+∑	    
 	done
     done
 fi
@@ -414,10 +420,16 @@ if [ $DO_PRB1 == "true" ]; then
 	for curv in $CURVS; do
 
 	    echo "Tracking iFOD1 streamlines at Lmax ${lmax} with a maximum curvature of ${curv} degrees..."
-	    tckgen $fod -algorithm iFOD1 \
+	    timeout 3600 tckgen $fod -algorithm iFOD1 \
 		   -select $NUM_FIBERS -act 5tt.mif -backtrack -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
-		   -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
+		   -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH -seeds 0 -max_attempts_per_seed 500 \
 		   wb_iFOD1_lmax${lmax}_curv${curv}.tck -force -nthreads $NCORE -quiet
+
+	    exit_status=$?
+	    if [[ $exit_status -eq 124 ]]; then
+		echo "iFOD1 Probabilistic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
+		exit 1
+	    fi
 	    
 	done
     done
@@ -444,11 +456,17 @@ if [ $DO_DETR == "true" ]; then
 	for curv in $CURVS; do
 
 	    echo "Tracking SD_STREAM streamlines at Lmax ${lmax} with a maximum curvature of ${curv} degrees..."
-	    tckgen $fod -algorithm SD_STREAM \
+	    timeout 3600 tckgen $fod -algorithm SD_STREAM \
 		   -select $NUM_FIBERS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
-		   -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
+		   -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH -seeds 0 -max_attempts_per_seed 500 \
 		   wb_SD_STREAM_lmax${lmax}_curv${curv}.tck -force -nthreads $NCORE -quiet
-	    
+
+	    exit_status=$?
+	    if [[ $exit_status -eq 124 ]]; then
+		echo "Deterministic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
+		exit 1
+	    fi
+
 	done
     done
 fi
@@ -479,8 +497,14 @@ if [ $DO_FACT == "true" ]; then
 	sh2peaks $fod $pks -num $FACT_DIRS -nthread $NCORE -quiet
 
 	echo "Tracking FACT streamlines at Lmax ${lmax} using ${FACT_DIRS} maximum directions..."
-	tckgen $pks -algorithm FACT -select $FACT_FIBS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
+	timeout 3600 tckgen $pks -algorithm FACT -select $FACT_FIBS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif -seeds 0 -max_attempts_per_seed 500 \
 	       -minlength $MIN_LENGTH -maxlength $MAX_LENGTH wb_FACT_lmax${lmax}.tck -force -nthreads $NCORE -quiet
+
+	exit_status=$?
+	if [[ $exit_status -eq 124 ]]; then
+	    echo "FACT tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
+	    exit 1
+	fi
 	
     done
 
@@ -493,10 +517,16 @@ if [ $DO_DTDT == "true" ]; then
     for curv in $CURVS; do
 
 	echo "Tracking deterministic tensor streamlines with a maximum curvature of ${curv} degrees..."
-	tckgen ${difm}.mif -algorithm Tensor_Det \
+	timeout 3600 tckgen ${difm}.mif -algorithm Tensor_Det \
 	       -select $NUM_FIBERS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
-	       -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
+	       -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH -seeds 0 -max_attempts_per_seed 500 \
 	       wb_Tensor_Det_curv${curv}.tck -force -nthreads $NCORE -quiet
+
+	exit_status=$?
+	if [[ $exit_status -eq 124 ]]; then
+	    echo "iFOD1 Probabilistic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
+	    exit 1
+	fi
 	
     done
 
@@ -509,11 +539,17 @@ if [ $DO_DTPB == "true" ]; then
     for curv in $CURVS; do
 
 	echo "Tracking probabilistic tensor streamlines at with a maximum curvature of ${curv} degrees..."
-	tckgen ${difm}.mif -algorithm Tensor_Prob \
+	timeout 3600 tckgen ${difm}.mif -algorithm Tensor_Prob \
 	       -select $NUM_FIBERS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
-	       -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
+	       -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH -seeds 0 -max_attempts_per_seed 500 \
 	       wb_Tensor_Prob_curv${curv}.tck -force -nthreads $NCORE -quiet
-	    
+
+	exit_status=$?
+	if [[ $exit_status -eq 124 ]]; then
+	    echo "iFOD1 Probabilistic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
+	    exit 1
+	fi
+	
     done
 
 fi
