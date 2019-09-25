@@ -150,7 +150,7 @@ if [ $MMAXS -gt $MAXLMAX ]; then
 fi
 
 ## create the list of the ensemble lmax values
-if [[ $ENS_LMAX == 'true' && $NMAX -eq 1 ]]; then
+if [ $ENS_LMAX == 'true' && $NMAX -eq 1 ]]; then
     
     ## create array of lmaxs to use
     emax=0
@@ -390,7 +390,7 @@ if [ $DO_PRB2 == "true" ]; then
 		   wb_iFOD2_lmax${lmax}_curv${curv}.tck -force -nthreads $NCORE -quiet
 
 	    exit_status=$?
-	    if [[ $exit_status -eq 124 ]]; then
+	    if [ $exit_status -eq 124 ]]; then
 		echo "iFOD2 Probabilistic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
 		exit 1
 	    fi
@@ -426,7 +426,7 @@ if [ $DO_PRB1 == "true" ]; then
 		   wb_iFOD1_lmax${lmax}_curv${curv}.tck -force -nthreads $NCORE -quiet
 
 	    exit_status=$?
-	    if [[ $exit_status -eq 124 ]]; then
+	    if [ $exit_status -eq 124 ]]; then
 		echo "iFOD1 Probabilistic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
 		exit 1
 	    fi
@@ -462,7 +462,7 @@ if [ $DO_DETR == "true" ]; then
 		   wb_SD_STREAM_lmax${lmax}_curv${curv}.tck -force -nthreads $NCORE -quiet
 
 	    exit_status=$?
-	    if [[ $exit_status -eq 124 ]]; then
+	    if [ $exit_status -eq 124 ]]; then
 		echo "Deterministic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
 		exit 1
 	    fi
@@ -501,7 +501,7 @@ if [ $DO_FACT == "true" ]; then
 	       -minlength $MIN_LENGTH -maxlength $MAX_LENGTH wb_FACT_lmax${lmax}.tck -force -nthreads $NCORE -quiet
 
 	exit_status=$?
-	if [[ $exit_status -eq 124 ]]; then
+	if [ $exit_status -eq 124 ]]; then
 	    echo "FACT tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
 	    exit 1
 	fi
@@ -523,7 +523,7 @@ if [ $DO_DTDT == "true" ]; then
 	       wb_Tensor_Det_curv${curv}.tck -force -nthreads $NCORE -quiet
 
 	exit_status=$?
-	if [[ $exit_status -eq 124 ]]; then
+	if [ $exit_status -eq 124 ]]; then
 	    echo "iFOD1 Probabilistic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
 	    exit 1
 	fi
@@ -545,7 +545,7 @@ if [ $DO_DTPB == "true" ]; then
 	       wb_Tensor_Prob_curv${curv}.tck -force -nthreads $NCORE -quiet
 
 	exit_status=$?
-	if [[ $exit_status -eq 124 ]]; then
+	if [ $exit_status -eq 124 ]; then
 	    echo "iFOD1 Probabilistic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
 	    exit 1
 	fi
