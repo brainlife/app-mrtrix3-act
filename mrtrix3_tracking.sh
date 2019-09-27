@@ -62,8 +62,10 @@ anat=t1
 echo "Converting raw data into MRTrix3 format..."
 mrconvert -fslgrad $BVEC $BVAL $DIFF ${difm}.mif --export_grad_mrtrix ${difm}.b -force -nthreads $NCORE -quiet
 
-## create mask of dwi data
-dwi2mask ${difm}.mif - -force -nthreads $NCORE -quiet | maskfilter - dilate b0_${out}_brain_mask.mif -npass 5 -force -nthreads $NCORE -quiet
+## create mask of dwi data - use bet for more robust mask
+bet $DIFF bet -R -m -f 0.3
+mrconvert bet_mask.nii.gz ${mask}.mif -force -nthreads $NCORE -quiet
+#dwi2mask ${difm}.mif - -force -nthreads $NCORE -quiet | maskfilter - dilate b0_${out}_brain_mask.mif -npass 5 -force -nthreads $NCORE -quiet
 #dwi2mask ${difm}.mif ${mask}.mif -force -nthreads $NCORE -quiet
 
 ## convert anatomy
