@@ -394,7 +394,7 @@ if [ $DO_PRB2 == "true" ]; then
 		echo "iFOD2 Probabilistic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
 		exit 1
 	    fi
-∑	    
+	    
 	done
     done
 fi
