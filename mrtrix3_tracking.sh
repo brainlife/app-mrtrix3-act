@@ -153,7 +153,7 @@ if [ $MMAXS -gt $MAXLMAX ]; then
 fi
 
 ## create the list of the ensemble lmax values
-if [ $ENS_LMAX == 'true' && $NMAX -eq 1 ]]; then
+if [ $ENS_LMAX == 'true' && $NMAX -eq 1 ]; then
     
     ## create array of lmaxs to use
     emax=0
