@@ -62,14 +62,17 @@ anat=t1
 echo "Converting raw data into MRTrix3 format..."
 mrconvert -fslgrad $BVEC $BVAL $DIFF ${difm}.mif --export_grad_mrtrix ${difm}.b -force -nthreads $NCORE -quiet
 
-## create mask of dwi data
-dwi2mask ${difm}.mif ${mask}.mif -force -nthreads $NCORE -quiet
+## create mask of dwi data - use bet for more robust mask
+bet $DIFF bet -R -m -f 0.3
+mrconvert bet_mask.nii.gz ${mask}.mif -force -nthreads $NCORE -quiet
+#dwi2mask ${difm}.mif - -force -nthreads $NCORE -quiet | maskfilter - dilate b0_${out}_brain_mask.mif -npass 5 -force -nthreads $NCORE -quiet
+#dwi2mask ${difm}.mif ${mask}.mif -force -nthreads $NCORE -quiet
 
 ## convert anatomy
 mrconvert $ANAT ${anat}.mif -force -nthreads $NCORE -quiet
 
 ## create b0 
-dwiextract ${difm}.mif - -bzero -nthreads $NCORE -quiet | mrmath - mean b0.mif -axis 3 -nthreads $NCORE -quiet
+dwiextract ${difm}.mif - -bzero -nthreads $NCORE -quiet | mrmath - mean b0.mif -axis 3 -force -nthreads $NCORE -quiet
 
 ## check if b0 volume successfully created
 if [ ! -f b0.mif ]; then
@@ -150,7 +153,7 @@ if [ $MMAXS -gt $MAXLMAX ]; then
 fi
 
 ## create the list of the ensemble lmax values
-if [[ $ENS_LMAX == 'true' && $NMAX -eq 1 ]]; then
+if [ $ENS_LMAX == 'true' ] && [ $NMAX -eq 1 ]; then
     
     ## create array of lmaxs to use
     emax=0
@@ -311,12 +314,12 @@ echo "Creating 5-Tissue-Type (5TT) tracking mask..."
 if [ $MS -eq 0 ]; then
 
     echo "Estimating CSD response function..."
-    dwi2response tournier ${difm}.mif wmt.txt -lmax $MAXLMAX -force -nthreads $NCORE -tempdir ./tmp -quiet
+    time dwi2response tournier ${difm}.mif wmt.txt -lmax $MAXLMAX -force -nthreads $NCORE -tempdir ./tmp -quiet
     
 else
 
     echo "Estimating MSMT CSD response function..."
-    dwi2response msmt_5tt ${difm}.mif 5tt.mif wmt.txt gmt.txt csf.txt -mask ${mask}.mif -lmax $RMAX -tempdir ./tmp -force -nthreads $NCORE -quiet
+    time dwi2response msmt_5tt ${difm}.mif 5tt.mif wmt.txt gmt.txt csf.txt -mask ${mask}.mif -lmax $RMAX -tempdir ./tmp -force -nthreads $NCORE -quiet
 
 fi
 
@@ -326,7 +329,7 @@ if [ $MS -eq 0 ]; then
     for lmax in $LMAXS; do
 
 	echo "Fitting CSD FOD of Lmax ${lmax}..."
-	dwi2fod -mask ${mask}.mif csd ${difm}.mif wmt.txt wmt_lmax${lmax}_fod.mif -lmax $lmax -force -nthreads $NCORE -quiet
+	time dwi2fod -mask ${mask}.mif csd ${difm}.mif wmt.txt wmt_lmax${lmax}_fod.mif -lmax $lmax -force -nthreads $NCORE -quiet
 
 	## intensity normalization of CSD fit
 	# if [ $NORM == 'true' ]; then
@@ -342,7 +345,7 @@ else
     for lmax in $LMAXS; do
 
 	echo "Fitting MSMT CSD FOD of Lmax ${lmax}..."
-	dwi2fod msmt_csd ${difm}.mif wmt.txt wmt_lmax${lmax}_fod.mif gmt.txt gmt_lmax${lmax}_fod.mif csf.txt csf_lmax${lmax}_fod.mif -mask ${mask}.mif -lmax $lmax,$lmax,$lmax -force -nthreads $NCORE -quiet
+	time dwi2fod msmt_csd ${difm}.mif wmt.txt wmt_lmax${lmax}_fod.mif gmt.txt gmt_lmax${lmax}_fod.mif csf.txt csf_lmax${lmax}_fod.mif -mask ${mask}.mif -lmax $lmax,$lmax,$lmax -force -nthreads $NCORE -quiet
 
 	if [ $NORM == 'true' ]; then
 
@@ -378,16 +381,22 @@ if [ $DO_PRB2 == "true" ]; then
 		fod=wmt_lmax${lmax}_fod.mif
 	    fi
 	else
-	    fod=wmt_lmax${lmax}.mif
+	    fod=wmt_lmax${lmax}_fod.mif
 	fi
 	
 	for curv in $CURVS; do
 
 	    echo "Tracking iFOD2 streamlines at Lmax ${lmax} with a maximum curvature of ${curv} degrees..."
-	    tckgen $fod -algorithm iFOD2 \
+	    timeout 3600 tckgen $fod -algorithm iFOD2 \
 		   -select $NUM_FIBERS -act 5tt.mif -backtrack -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
-		   -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
+		   -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH -seeds 0 -max_attempts_per_seed 500 \
 		   wb_iFOD2_lmax${lmax}_curv${curv}.tck -force -nthreads $NCORE -quiet
+
+	    exit_status=$?
+	    if [ $exit_status -eq 124 ]; then
+		echo "iFOD2 Probabilistic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
+		exit 1
+	    fi
 	    
 	done
     done
@@ -408,16 +417,22 @@ if [ $DO_PRB1 == "true" ]; then
 		fod=wmt_lmax${lmax}_fod.mif
 	    fi
 	else
-	    fod=wmt_lmax${lmax}.mif
+	    fod=wmt_lmax${lmax}_fod.mif
 	fi
 
 	for curv in $CURVS; do
 
 	    echo "Tracking iFOD1 streamlines at Lmax ${lmax} with a maximum curvature of ${curv} degrees..."
-	    tckgen $fod -algorithm iFOD1 \
+	    timeout 3600 tckgen $fod -algorithm iFOD1 \
 		   -select $NUM_FIBERS -act 5tt.mif -backtrack -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
-		   -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
+		   -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH -seeds 0 -max_attempts_per_seed 500 \
 		   wb_iFOD1_lmax${lmax}_curv${curv}.tck -force -nthreads $NCORE -quiet
+
+	    exit_status=$?
+	    if [ $exit_status -eq 124 ]; then
+		echo "iFOD1 Probabilistic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
+		exit 1
+	    fi
 	    
 	done
     done
@@ -438,17 +453,23 @@ if [ $DO_DETR == "true" ]; then
 		fod=wmt_lmax${lmax}_fod.mif
 	    fi
 	else
-	    fod=wmt_lmax${lmax}.mif
+	    fod=wmt_lmax${lmax}_fod.mif
 	fi
 
 	for curv in $CURVS; do
 
 	    echo "Tracking SD_STREAM streamlines at Lmax ${lmax} with a maximum curvature of ${curv} degrees..."
-	    tckgen $fod -algorithm SD_STREAM \
+	    timeout 3600 tckgen $fod -algorithm SD_STREAM \
 		   -select $NUM_FIBERS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
-		   -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
+		   -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH -seeds 0 -max_attempts_per_seed 500 \
 		   wb_SD_STREAM_lmax${lmax}_curv${curv}.tck -force -nthreads $NCORE -quiet
-	    
+
+	    exit_status=$?
+	    if [ $exit_status -eq 124 ]; then
+		echo "Deterministic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
+		exit 1
+	    fi
+
 	done
     done
 fi
@@ -471,7 +492,7 @@ if [ $DO_FACT == "true" ]; then
 		fod=wmt_lmax${lmax}_fod.mif
 	    fi
 	else
-	    fod=wmt_lmax${lmax}.mif
+	    fod=wmt_lmax${lmax}_fod.mif
 	fi
 	    
 	echo "Extracting $FACT_DIRS peaks from FOD Lmax $lmax for FACT tractography..."
@@ -479,8 +500,14 @@ if [ $DO_FACT == "true" ]; then
 	sh2peaks $fod $pks -num $FACT_DIRS -nthread $NCORE -quiet
 
 	echo "Tracking FACT streamlines at Lmax ${lmax} using ${FACT_DIRS} maximum directions..."
-	tckgen $pks -algorithm FACT -select $FACT_FIBS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
+	timeout 3600 tckgen $pks -algorithm FACT -select $FACT_FIBS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif -seeds 0 -max_attempts_per_seed 500 \
 	       -minlength $MIN_LENGTH -maxlength $MAX_LENGTH wb_FACT_lmax${lmax}.tck -force -nthreads $NCORE -quiet
+
+	exit_status=$?
+	if [ $exit_status -eq 124 ]; then
+	    echo "FACT tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
+	    exit 1
+	fi
 	
     done
 
@@ -493,10 +520,16 @@ if [ $DO_DTDT == "true" ]; then
     for curv in $CURVS; do
 
 	echo "Tracking deterministic tensor streamlines with a maximum curvature of ${curv} degrees..."
-	tckgen ${difm}.mif -algorithm Tensor_Det \
+	timeout 3600 tckgen ${difm}.mif -algorithm Tensor_Det \
 	       -select $NUM_FIBERS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
-	       -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
+	       -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH -seeds 0 -max_attempts_per_seed 500 \
 	       wb_Tensor_Det_curv${curv}.tck -force -nthreads $NCORE -quiet
+
+	exit_status=$?
+	if [ $exit_status -eq 124 ]; then
+	    echo "iFOD1 Probabilistic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
+	    exit 1
+	fi
 	
     done
 
@@ -509,11 +542,17 @@ if [ $DO_DTPB == "true" ]; then
     for curv in $CURVS; do
 
 	echo "Tracking probabilistic tensor streamlines at with a maximum curvature of ${curv} degrees..."
-	tckgen ${difm}.mif -algorithm Tensor_Prob \
+	timeout 3600 tckgen ${difm}.mif -algorithm Tensor_Prob \
 	       -select $NUM_FIBERS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
-	       -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH \
+	       -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH -seeds 0 -max_attempts_per_seed 500 \
 	       wb_Tensor_Prob_curv${curv}.tck -force -nthreads $NCORE -quiet
-	    
+
+	exit_status=$?
+	if [ $exit_status -eq 124 ]; then
+	    echo "iFOD1 Probabilistic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
+	    exit 1
+	fi
+	
     done
 
 fi
