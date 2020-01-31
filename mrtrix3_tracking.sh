@@ -45,6 +45,9 @@ DO_FACT=`jq -r '.do_fact' config.json`
 FACT_DIRS=`jq -r '.fact_dirs' config.json`
 FACT_FIBS=`jq -r '.fact_fibs' config.json`
 
+# PREMASK option for 5ttgen
+PREMASK=`jq -r '.premask' config.json`
+
 ##
 ## begin execution
 ##
@@ -299,8 +302,12 @@ tensor2metric -mask ${mask}.mif -adc md.mif -fa fa.mif -ad ad.mif -rd rd.mif -cl
 
 echo "Creating 5-Tissue-Type (5TT) tracking mask..."
 
-## convert anatomy 
-5ttgen fsl ${anat}.mif 5tt.mif -nocrop -sgm_amyg_hipp -tempdir ./tmp -force -nthreads $NCORE -quiet
+## convert anatomy
+if [[ ${PREMASK} == 'false' ]]; then
+	5ttgen fsl ${anat}.mif 5tt.mif -nocrop -sgm_amyg_hipp -tempdir ./tmp -force -nthreads $NCORE -quiet
+else
+	5ttgen fsl ${anat.mif} 5tt.mif -premasked -nocrop -sgm_amyg_hipp -tempdir ./tmp -force -nthreads $NCORE -quiet
+fi
 
 ## generate gm-wm interface seed mask
 5tt2gmwmi 5tt.mif gmwmi_seed.mif -force -nthreads $NCORE -quiet
