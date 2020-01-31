@@ -46,7 +46,7 @@ FACT_DIRS=`jq -r '.fact_dirs' config.json`
 FACT_FIBS=`jq -r '.fact_fibs' config.json`
 
 # PREMASK option for 5ttgen
-PREMASK=`jq -r '.premaks' config.json`
+PREMASK=`jq -r '.premask' config.json`
 
 ##
 ## begin execution
