@@ -72,7 +72,7 @@ dwi2mask ${difm}.mif ${mask}.mif -force -nthreads $NCORE -quiet
 mrconvert $ANAT ${anat}.mif -force -nthreads $NCORE -quiet
 
 ## create b0 
-dwiextract ${difm}.mif - -bzero -nthreads $NCORE -quiet | mrmath - mean b0.mif -axis 3 -nthreads $NCORE -quiet
+dwiextract ${difm}.mif - -bzero -nthreads $NCORE -quiet | mrmath - mean b0.mif -axis 3 -nthreads $NCORE -quiet -force
 
 ## check if b0 volume successfully created
 if [ ! -f b0.mif ]; then
