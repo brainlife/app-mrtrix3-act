@@ -28,6 +28,7 @@ IMAXS=`jq -r '.imaxs' config.json`
 
 ## tracking params
 CURVS=`jq -r '.curvs' config.json`
+STEP_SIZE=`jq -r .step config.json`
 NUM_FIBERS=`jq -r '.num_fibers' config.json`
 MIN_LENGTH=`jq -r '.min_length' config.json`
 MAX_LENGTH=`jq -r '.max_length' config.json`
@@ -284,7 +285,7 @@ if [ $MS -eq 0 ]; then
 
     ## estimate single shell tensor
     echo "Fitting tensor model..."
-    dwi2tensor -mask ${mask}.mif ${dift}.mif dt.mif -bvalue_scaling false -force -nthreads $NCORE -quiet
+    dwi2tensor -mask ${mask}.mif ${dift}.mif dt.mif -force -nthreads $NCORE -quiet
 
 else
 
@@ -293,13 +294,13 @@ else
 
     ## fit the requested single shell tensor for the multishell data
     echo "Fitting single-shell b-value $TENSOR_FIT tensor model..."
-    dwi2tensor -mask ${mask}.mif ${dift}.mif dt.mif -bvalue_scaling false -force -nthreads $NCORE -quiet
+    dwi2tensor -mask ${mask}.mif ${dift}.mif dt.mif false -force -nthreads $NCORE -quiet
 
     else
 
     ## estimate multishell tensor w/ kurtosis and b-value scaling
     echo "Fitting multi-shell tensor model..."
-    dwi2tensor -mask ${mask}.mif ${dift}.mif -dkt dk.mif dt.mif -bvalue_scaling true -force -nthreads $NCORE -quiet
+    dwi2tensor -mask ${mask}.mif ${dift}.mif -dkt dk.mif dt.mif -force -nthreads $NCORE -quiet
 
     fi
 
@@ -309,7 +310,7 @@ fi
 tensor2metric -mask ${mask}.mif -adc md.mif -fa fa.mif -ad ad.mif -rd rd.mif -cl cl.mif -cp cp.mif -cs cs.mif dt.mif -force -nthreads $NCORE -quiet
 
 echo "Creating 5-Tissue-Type (5TT) tracking mask..."
-5ttgen fsl ${anat}.mif 5tt.mif -nocrop -sgm_amyg_hipp -tempdir ./tmp -force $([ "$PREMASK" == "true" ] && echo "-premasked") -nthreads $NCORE -quiet
+5ttgen fsl ${anat}.mif 5tt.mif -nocrop -sgm_amyg_hipp -scratch ./tmp $([ "$PREMASK" == "true" ] && echo "-premasked") -force -nthreads $NCORE -quiet
 
 ## generate gm-wm interface seed mask
 5tt2gmwmi 5tt.mif gmwmi_seed.mif -force -nthreads $NCORE -quiet
@@ -320,12 +321,12 @@ echo "Creating 5-Tissue-Type (5TT) tracking mask..."
 if [ $MS -eq 0 ]; then
 
     echo "Estimating CSD response function..."
-    time dwi2response tournier ${difm}.mif wmt.txt -lmax $MAXLMAX -force -nthreads $NCORE -tempdir ./tmp -quiet
+    time dwi2response tournier ${difm}.mif wmt.txt -lmax $MAXLMAX -force -nthreads $NCORE -scratch ./tmp -quiet
     
 else
 
     echo "Estimating MSMT CSD response function..."
-    time dwi2response msmt_5tt ${difm}.mif 5tt.mif wmt.txt gmt.txt csf.txt -mask ${mask}.mif -lmax $RMAX -tempdir ./tmp -force -nthreads $NCORE -quiet
+    time dwi2response msmt_5tt ${difm}.mif 5tt.mif wmt.txt gmt.txt csf.txt -mask ${mask}.mif -lmax $RMAX -scratch ./tmp -force -nthreads $NCORE -quiet
 
 fi
 
@@ -394,9 +395,9 @@ if [ $DO_PRB2 == "true" ]; then
 
         echo "Tracking iFOD2 streamlines at Lmax ${lmax} with a maximum curvature of ${curv} degrees..."
         timeout $TCKGEN_TIMEOUT tckgen $fod -algorithm iFOD2 \
-           -select $NUM_FIBERS -act 5tt.mif -backtrack -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
+           -select $NUM_FIBERS -step $STEP_SIZE -act 5tt.mif -backtrack -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
            -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH -seeds 0 -max_attempts_per_seed 500 \
-           wb_iFOD2_lmax${lmax}_curv${curv}.tck -force -nthreads $NCORE -quiet
+           wb_iFOD2_lmax${lmax}_curv${curv}.tck -downsample 1 -force -nthreads $NCORE -quiet
 
         exit_status=$?
         if [ $exit_status -eq 124 ]; then
@@ -430,9 +431,9 @@ if [ $DO_PRB1 == "true" ]; then
 
         echo "Tracking iFOD1 streamlines at Lmax ${lmax} with a maximum curvature of ${curv} degrees..."
         timeout $TCKGEN_TIMEOUT tckgen $fod -algorithm iFOD1 \
-           -select $NUM_FIBERS -act 5tt.mif -backtrack -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
+           -select $NUM_FIBERS -step $STEP_SIZE -act 5tt.mif -backtrack -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
            -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH -seeds 0 -max_attempts_per_seed 500 \
-           wb_iFOD1_lmax${lmax}_curv${curv}.tck -force -nthreads $NCORE -quiet
+           wb_iFOD1_lmax${lmax}_curv${curv}.tck -downsample 1 -force -nthreads $NCORE -quiet
 
         exit_status=$?
         if [ $exit_status -eq 124 ]; then
@@ -466,9 +467,9 @@ if [ $DO_DETR == "true" ]; then
 
         echo "Tracking SD_STREAM streamlines at Lmax ${lmax} with a maximum curvature of ${curv} degrees..."
         timeout $TCKGEN_TIMEOUT tckgen $fod -algorithm SD_STREAM \
-           -select $NUM_FIBERS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
+           -select $NUM_FIBERS -step $STEP_SIZE -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
            -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH -seeds 0 -max_attempts_per_seed 500 \
-           wb_SD_STREAM_lmax${lmax}_curv${curv}.tck -force -nthreads $NCORE -quiet
+           wb_SD_STREAM_lmax${lmax}_curv${curv}.tck -downsample 1 -force -nthreads $NCORE -quiet
 
         exit_status=$?
         if [ $exit_status -eq 124 ]; then
@@ -503,8 +504,8 @@ if [ $DO_FACT == "true" ]; then
     sh2peaks $fod $pks -num $FACT_DIRS -nthread $NCORE -quiet
 
     echo "Tracking FACT streamlines at Lmax ${lmax} using ${FACT_DIRS} maximum directions..."
-    timeout $TCKGEN_TIMEOUT tckgen $pks -algorithm FACT -select $FACT_FIBS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif -seeds 0 -max_attempts_per_seed 500 \
-           -minlength $MIN_LENGTH -maxlength $MAX_LENGTH wb_FACT_lmax${lmax}.tck -force -nthreads $NCORE -quiet
+    timeout $TCKGEN_TIMEOUT tckgen $pks -algorithm FACT -select $FACT_FIBS -step $STEP_SIZE -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif -seeds 0 -max_attempts_per_seed 500 \
+           -minlength $MIN_LENGTH -maxlength $MAX_LENGTH wb_FACT_lmax${lmax}.tck -downsample 1 -force -nthreads $NCORE -quiet
 
     exit_status=$?
     if [ $exit_status -eq 124 ]; then
@@ -519,10 +520,11 @@ if [ $DO_DTDT == "true" ]; then
     echo "Tracking deterministic tensor streamlines..."
     
     for curv in $CURVS; do
-
-           -select $NUM_FIBERS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
+        echo "Tracking deterministic tensor streamlines with a maximum curvature of ${curv} degrees..."
+        timeout $TCKGEN_TIMEOUT tckgen ${difm}.mif -algorithm Tensor_Det \
+           -select $NUM_FIBERS -step $STEP_SIZE -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
            -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH -seeds 0 -max_attempts_per_seed 500 \
-           wb_Tensor_Det_curv${curv}.tck -force -nthreads $NCORE -quiet
+           wb_Tensor_Det_curv${curv}.tck -downsample 1 -force -nthreads $NCORE -quiet
 
     exit_status=$?
     if [ $exit_status -eq 124 ]; then
@@ -542,9 +544,9 @@ if [ $DO_DTPB == "true" ]; then
 
     echo "Tracking probabilistic tensor streamlines at with a maximum curvature of ${curv} degrees..."
     timeout $TCKGEN_TIMEOUT tckgen ${difm}.mif -algorithm Tensor_Prob \
-           -select $NUM_FIBERS -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
+           -select $NUM_FIBERS -step $STEP_SIZE -act 5tt.mif -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
            -angle ${curv} -minlength $MIN_LENGTH -maxlength $MAX_LENGTH -seeds 0 -max_attempts_per_seed 500 \
-           wb_Tensor_Prob_curv${curv}.tck -force -nthreads $NCORE -quiet
+           wb_Tensor_Prob_curv${curv}.tck -downsample 1 -force -nthreads $NCORE -quiet
 
     exit_status=$?
     if [ $exit_status -eq 124 ]; then
