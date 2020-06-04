@@ -48,7 +48,7 @@ You can submit this App online at [https://doi.org/10.25663/bl.app.101](https://
 
 ```json
 {
-        "anat": "./input/anat/t1.nii.gz",
+    "anat": "./input/anat/t1.nii.gz",
 	"dwi": "./input/dwi.nii.gz",
 	"bvecs": "./input/dwi.bvecs",
 	"bvals": "./input/dwi.bvals",
