@@ -4,4 +4,4 @@
 #PBS -V
 
 echo "Tracking data..."
-time singularity exec -e docker://brainlife/mrtrix3:3.0_RC3 ./mrtrix3_tracking.sh
+time singularity exec -e docker://brainlife/mrtrix3:3.0.0 ./mrtrix3_tracking.sh
