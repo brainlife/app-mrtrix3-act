@@ -125,7 +125,7 @@ echo -n "Maximum Lmax:   "; echo $MLMAXS
 
 ## find maximum lmax that can be computed within data
 MAXLMAX=`echo "$MLMAXS" | tr " " "\n" | sort -nr | head -n1`
-echo "Maximum Lmax across shells: $MAXLMAX"
+echo "Maximum Lmax possible across shells: $MAXLMAX"
 
 ## if input $IMAXS is empty, set to $MAXLMAX
 if [ -z $IMAXS ]; then
@@ -159,6 +159,10 @@ if [ $MMAXS -gt $MAXLMAX ]; then
     echo "Setting maximum Lmax to maximum allowed by the data: Lmax $MAXLMAX."
     MMAXS=$MAXLMAX
 
+else
+
+    MMAXS=$IMAXS
+
 fi
 
 ## create the list of the ensemble lmax values
@@ -188,7 +192,7 @@ fi
 
 ## create the correct length of lmax
 if [ $NB0s -eq 0 ]; then
-    RMAX=${MAXLMAX}
+    RMAX=${MMAXS}
 else
     RMAX=0
 fi
@@ -198,7 +202,7 @@ iter=1
 while [ $iter -lt $(($NSHELL+1)) ]; do
     
     ## add the $MAXLMAX to the argument
-    RMAX=$RMAX,$MAXLMAX
+    RMAX=$RMAX,$MMAXS
 
     ## update the iterator
     iter=$(($iter+1))
@@ -321,7 +325,7 @@ echo "Creating 5-Tissue-Type (5TT) tracking mask..."
 if [ $MS -eq 0 ]; then
 
     echo "Estimating CSD response function..."
-    time dwi2response tournier ${difm}.mif wmt.txt -lmax $MAXLMAX -force -nthreads $NCORE -scratch ./tmp -quiet
+    time dwi2response tournier ${difm}.mif wmt.txt -lmax $RMAX -force -nthreads $NCORE -scratch ./tmp -quiet
     
 else
 
