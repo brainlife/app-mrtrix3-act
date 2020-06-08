@@ -137,9 +137,10 @@ fi
 ## check if more than 1 lmax passed
 NMAX=`echo $IMAXS | wc -w`
 
+## grab the max lmax of what was input
 MMAXS=`echo -n "$IMAXS" | tr " " "\n" | sort -nr | head -n1`
 
-## find max of the requested list
+## get the count of the requested list and if it's empty assign the highest possible
 if [ $NMAX -gt 1 ]; then
 
     echo "User requested Lmax(s) up to: $MMAXS"
@@ -174,7 +175,9 @@ if [ $MMAXS -gt $MAXLMAX ]; then
     done
 
     LMAXS=$FMAXS
+    #LMAXS=`sort -u $FMAXS` ## sort and unique lmaxs only? for really bad inputs...
 
+## otherwise just pass what's there
 else
 
     if [ -z "$IMAXS" ]; then
@@ -188,6 +191,7 @@ else
 fi
 
 ## create the list of the ensemble lmax values
+## this will override a partial list to the highest requested / possible lmax
 if [ $ENS_LMAX == 'true' ]; then
 
     echo "Creating ensemble lmax tractography up to lmax: $MMAXS"
@@ -207,11 +211,6 @@ if [ $ENS_LMAX == 'true' ]; then
 
     LMAXS=$EMAXS
     
-else
-
-    ## or just pass the list on
-    LMAXS=$LMAXS
-
 fi
 
 ## create repeated lmax argument(s) based on how many shells are found
