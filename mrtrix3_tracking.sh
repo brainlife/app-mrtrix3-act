@@ -74,8 +74,8 @@ mrconvert -fslgrad $BVEC $BVAL $DIFF ${difm}.mif --export_grad_mrtrix ${difm}.b 
 ## create mask of dwi data - use bet for more robust mask
 bet $DIFF bet -R -m -f 0.3
 mrconvert bet_mask.nii.gz ${mask}.mif -force -nthreads $NCORE -quiet
-#dwi2mask ${difm}.mif - -force -nthreads $NCORE -quiet | maskfilter - dilate b0_${out}_brain_mask.mif -npass 5 -force -nthreads $NCORE -quiet
-#dwi2mask ${difm}.mif ${mask}.mif -force -nthreads $NCORE -quiet
+dwi2mask ${difm}.mif - -force -nthreads $NCORE -quiet | maskfilter - dilate b0_${out}_brain_mask.mif -npass 5 -force -nthreads $NCORE -quiet
+dwi2mask ${difm}.mif ${mask}.mif -force -nthreads $NCORE -quiet
 
 ## convert anatomy
 mrconvert $ANAT ${anat}.mif -force -nthreads $NCORE -quiet
@@ -104,7 +104,7 @@ else
     MS=0
     echo "Single-shell data: $NSHELL shell"
     if [ ! -z "$TENSOR_FIT" ]; then
-    echo "Ignoring requested tensor shell. All data will be fit and tracked on the same b-value."
+	echo "Ignoring requested tensor shell. All data will be fit and tracked on the same b-value."
     fi
 fi
 
@@ -128,28 +128,29 @@ MAXLMAX=`echo "$MLMAXS" | tr " " "\n" | sort -nr | head -n1`
 echo "Maximum Lmax possible across shells: $MAXLMAX"
 
 ## if input $IMAXS is empty, set to $MAXLMAX
-if [ -z $IMAXS ]; then
-    echo "No Lmax values requested."
+if [ -z "$IMAXS" ]; then
+    echo "No Lmax value(s) requested."
     echo "Using the maximum Lmax of $MAXLMAX by default."
-    IMAXS=$MAXLMAX
+    LMAXS=$MAXLMAX
 fi
 
 ## check if more than 1 lmax passed
 NMAX=`echo $IMAXS | wc -w`
 
+MMAXS=`echo -n "$IMAXS" | tr " " "\n" | sort -nr | head -n1`
+
 ## find max of the requested list
 if [ $NMAX -gt 1 ]; then
 
-    ## pick the highest
-    MMAXS=`echo -n "$IMAXS" | tr " " "\n" | sort -nr | head -n1`
     echo "User requested Lmax(s) up to: $MMAXS"
-    LMAXS=$IMAXS
 
 else
 
-    ## take the input
-    MMAXS=$IMAXS
-    
+    echo "User did not request Lmax value(s). Using highest possible Lmax detected"
+    if [ -z $MMAXS ]; then
+	MMAXS=$MAXLMAX
+    fi
+
 fi
 
 ## make sure requested Lmax is possible - fix if not
@@ -159,37 +160,61 @@ if [ $MMAXS -gt $MAXLMAX ]; then
     echo "Setting maximum Lmax to maximum allowed by the data: Lmax $MAXLMAX."
     MMAXS=$MAXLMAX
 
+    ## fix the values above available max to max
+    FMAXS=''
+    for val in $IMAXS
+    do
+
+	if [ $val -gt $MAXLMAX ]; then
+	    FMAXS="$FMAXS $MAXLMAX"
+	else
+	    FMAXS="$FMAXS $val"
+	fi
+
+    done
+
+    LMAXS=$FMAXS
+
 else
 
-    MMAXS=$IMAXS
-
+    if [ -z "$IMAXS" ]; then
+	LMAXS=$MAXLMAX
+	MMAXS=$MAXLMAX
+    else
+	## take the input
+	LMAXS=$IMAXS
+    fi
+    
 fi
 
 ## create the list of the ensemble lmax values
-if [ $ENS_LMAX == 'true' ] && [ $NMAX -eq 1 ]; then
+if [ $ENS_LMAX == 'true' ]; then
+
+    echo "Creating ensemble lmax tractography up to lmax: $MMAXS"
     
     ## create array of lmaxs to use
     emax=0
-    LMAXS=''
+    EMAXS=''
     
     ## while less than the max requested
     while [ $emax -lt $MMAXS ]; do
 
-    ## iterate
-    emax=$(($emax+2))
-    LMAXS=`echo -n $LMAXS; echo -n ' '; echo -n $emax`
+	## iterate
+	emax=$(($emax+2))
+	EMAXS=`echo -n $EMAXS; echo -n ' '; echo -n $emax`
 
     done
 
+    LMAXS=$EMAXS
+    
 else
 
     ## or just pass the list on
-    LMAXS=$IMAXS
+    LMAXS=$LMAXS
 
 fi
 
 ## create repeated lmax argument(s) based on how many shells are found
-
 ## create the correct length of lmax
 if [ $NB0s -eq 0 ]; then
     RMAX=${MMAXS}
@@ -216,43 +241,43 @@ TOTAL=0
 
 if [ $DO_PRB2 == "true" ]; then
     for lmax in $LMAXS; do
-    for curv in $CURVS; do
-        TOTAL=$(($TOTAL+$NUM_FIBERS))
-    done
+	for curv in $CURVS; do
+            TOTAL=$(($TOTAL+$NUM_FIBERS))
+	done
     done
 fi
 
 if [ $DO_PRB1 == "true" ]; then
     for lmax in $LMAXS; do
-    for curv in $CURVS; do
-        TOTAL=$(($TOTAL+$NUM_FIBERS))
-    done
+	for curv in $CURVS; do
+            TOTAL=$(($TOTAL+$NUM_FIBERS))
+	done
     done
 fi
 
 if [ $DO_DETR == "true" ]; then
     for lmax in $LMAXS; do
-    for curv in $CURVS; do
-        TOTAL=$(($TOTAL+$NUM_FIBERS))
-    done
+	for curv in $CURVS; do
+            TOTAL=$(($TOTAL+$NUM_FIBERS))
+	done
     done
 fi
 
 if [ $DO_FACT == "true" ]; then
     for lmax in $LMAXS; do
-    TOTAL=$(($TOTAL+$FACT_FIBS))
+	TOTAL=$(($TOTAL+$FACT_FIBS))
     done
 fi
 
 if [ $DO_DTDT == "true" ]; then
     for curv in $CURVS; do
-    TOTAL=$(($TOTAL+$NUM_FIBERS))
+	TOTAL=$(($TOTAL+$NUM_FIBERS))
     done
 fi
 
 if [ $DO_DTPB == "true" ]; then
     for curv in $CURVS; do
-    TOTAL=$(($TOTAL+$NUM_FIBERS))
+	TOTAL=$(($TOTAL+$NUM_FIBERS))
     done
 fi
 
@@ -263,22 +288,22 @@ if [ ! -z $TENSOR_FIT ]; then
 
     ## look for the requested shell
     TFE=`echo $BVALS | grep -o $TENSOR_FIT`
-
+    
     ## if it finds it
     if [ ! -z $TFE ]; then
-    echo "Requested b-value for fitting the tensor, $TENSOR_FIT, exists within the data."
-    echo "Extracting b-${TENSOR_FIT} shell for tensor fit..."    
-    dwiextract ${difm}.mif ${difm}_ten.mif -bzero -shell ${EB0}${TENSOR_FIT} -force -nthreads $NCORE -quiet
-    dift=${difm}_ten
+	echo "Requested b-value for fitting the tensor, $TENSOR_FIT, exists within the data."
+	echo "Extracting b-${TENSOR_FIT} shell for tensor fit..."    
+	dwiextract ${difm}.mif ${difm}_ten.mif -bzero -shell ${EB0}${TENSOR_FIT} -force -nthreads $NCORE -quiet
+	dift=${difm}_ten
     else
-    echo "Requested b-value for fitting the tensor, $TENSOR_FIT, does not exist within the data."
-    echo "The single-shell tensor fit will be ignored; the tensor will be fit across all b-values."
-    dift=${difm}
-    TENSOR_FIT=''
+	echo "Requested b-value for fitting the tensor, $TENSOR_FIT, does not exist within the data."
+	echo "The single-shell tensor fit will be ignored; the tensor will be fit across all b-values."
+	dift=${difm}
+	TENSOR_FIT=''
     fi
-
+    
 else
-
+    
     ## just pass the data forward
     dift=${difm}
     
@@ -295,19 +320,19 @@ else
 
     ## if single shell tensor is requested, fit it
     if [ ! -z $TENSOR_FIT ]; then
-
-    ## fit the requested single shell tensor for the multishell data
-    echo "Fitting single-shell b-value $TENSOR_FIT tensor model..."
-    dwi2tensor -mask ${mask}.mif ${dift}.mif dt.mif false -force -nthreads $NCORE -quiet
-
+	
+	## fit the requested single shell tensor for the multishell data
+	echo "Fitting single-shell b-value $TENSOR_FIT tensor model..."
+	dwi2tensor -mask ${mask}.mif ${dift}.mif dt.mif false -force -nthreads $NCORE -quiet
+	
     else
-
-    ## estimate multishell tensor w/ kurtosis and b-value scaling
-    echo "Fitting multi-shell tensor model..."
-    dwi2tensor -mask ${mask}.mif ${dift}.mif -dkt dk.mif dt.mif -force -nthreads $NCORE -quiet
-
+	
+	## estimate multishell tensor w/ kurtosis and b-value scaling
+	echo "Fitting multi-shell tensor model..."
+	dwi2tensor -mask ${mask}.mif ${dift}.mif -dkt dk.mif dt.mif -force -nthreads $NCORE -quiet
+	
     fi
-
+    
 fi
 
 ## create tensor metrics either way
@@ -322,8 +347,9 @@ echo "Creating 5-Tissue-Type (5TT) tracking mask..."
 ## create visualization output
 5tt2vis 5tt.mif 5ttvis.mif -force -nthreads $NCORE -quiet
 
+## fit the response functions on the highest requested lmax
 if [ $MS -eq 0 ]; then
-
+    
     echo "Estimating CSD response function..."
     time dwi2response tournier ${difm}.mif wmt.txt -lmax $RMAX -force -nthreads $NCORE -scratch ./tmp -quiet
     
@@ -341,7 +367,7 @@ if [ $MS -eq 0 ]; then
 
 	echo "Fitting CSD FOD of Lmax ${lmax}..."
 	time dwi2fod -mask ${mask}.mif csd ${difm}.mif wmt.txt wmt_lmax${lmax}_fod.mif -lmax $lmax -force -nthreads $NCORE -quiet
-
+	
     ## intensity normalization of CSD fit
     # if [ $NORM == 'true' ]; then
     #     #echo "Performing intensity normalization on Lmax $lmax..."
@@ -365,9 +391,9 @@ else
 
         ## check for failure / continue w/o exiting
         if [ -z wmt_lmax${lmax}_norm.mif ]; then
-        echo "Multi-tissue intensity normalization failed for Lmax $lmax."
-        echo "This processing step will not be applied moving forward."
-        NORM='false'
+            echo "Multi-tissue intensity normalization failed for Lmax $lmax."
+            echo "This processing step will not be applied moving forward."
+            NORM='false'
         fi
 
     fi
@@ -383,20 +409,20 @@ if [ $DO_PRB2 == "true" ]; then
     echo "Tracking iFOD2 streamlines..."
     
     for lmax in $LMAXS; do
-
-    ## pick correct FOD for tracking
-    if [ $MS -eq 1 ]; then
-        if [ $NORM == 'true' ]; then
-        fod=wmt_lmax${lmax}_norm.mif
+	
+	## pick correct FOD for tracking
+	if [ $MS -eq 1 ]; then
+            if [ $NORM == 'true' ]; then
+		fod=wmt_lmax${lmax}_norm.mif
         else
-        fod=wmt_lmax${lmax}_fod.mif
-        fi
-    else
-        fod=wmt_lmax${lmax}_fod.mif
-    fi
-    
+            fod=wmt_lmax${lmax}_fod.mif
+            fi
+	else
+            fod=wmt_lmax${lmax}_fod.mif
+	fi
+	
     for curv in $CURVS; do
-
+	
         echo "Tracking iFOD2 streamlines at Lmax ${lmax} with a maximum curvature of ${curv} degrees..."
         timeout $TCKGEN_TIMEOUT tckgen $fod -algorithm iFOD2 \
            -select $NUM_FIBERS -step $STEP_SIZE -act 5tt.mif -backtrack -crop_at_gmwmi -seed_gmwmi gmwmi_seed.mif \
@@ -405,8 +431,8 @@ if [ $DO_PRB2 == "true" ]; then
 
         exit_status=$?
         if [ $exit_status -eq 124 ]; then
-        echo "iFOD2 Probabilistic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
-        exit 1
+            echo "iFOD2 Probabilistic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
+            exit 1
         fi
         
     done
@@ -423,14 +449,14 @@ if [ $DO_PRB1 == "true" ]; then
     ## pick correct FOD for tracking
     if [ $MS -eq 1 ]; then
         if [ $NORM == 'true' ]; then
-        fod=wmt_lmax${lmax}_norm.mif
+            fod=wmt_lmax${lmax}_norm.mif
         else
-        fod=wmt_lmax${lmax}_fod.mif
+            fod=wmt_lmax${lmax}_fod.mif
         fi
     else
         fod=wmt_lmax${lmax}_fod.mif
     fi
-
+    
     for curv in $CURVS; do
 
         echo "Tracking iFOD1 streamlines at Lmax ${lmax} with a maximum curvature of ${curv} degrees..."
@@ -441,8 +467,8 @@ if [ $DO_PRB1 == "true" ]; then
 
         exit_status=$?
         if [ $exit_status -eq 124 ]; then
-        echo "iFOD1 Probabilistic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
-        exit 1
+            echo "iFOD1 Probabilistic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
+            exit 1
         fi
         
     done
@@ -459,9 +485,9 @@ if [ $DO_DETR == "true" ]; then
     ## pick correct FOD for tracking
     if [ $MS -eq 1 ]; then
         if [ $NORM == 'true' ]; then
-        fod=wmt_lmax${lmax}_norm.mif
+            fod=wmt_lmax${lmax}_norm.mif
         else
-        fod=wmt_lmax${lmax}_fod.mif
+            fod=wmt_lmax${lmax}_fod.mif
         fi
     else
         fod=wmt_lmax${lmax}_fod.mif
@@ -477,8 +503,8 @@ if [ $DO_DETR == "true" ]; then
 
         exit_status=$?
         if [ $exit_status -eq 124 ]; then
-        echo "Deterministic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
-        exit 1
+            echo "Deterministic tracking timed out with settings: Lmax: $lmax; Curvature: $curv"
+            exit 1
         fi
 
     done
