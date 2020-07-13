@@ -5,21 +5,16 @@
 
 This app uses MRTrix3 to create **R**eprocible **A**natomically **C**onstrained **E**nsemble **Track**ing (RACE-Track).
 
-The app generates a set of streamlines for every requested tractography model (Tensor or CSD) and algorithm (iFOD1, iFOD2, FACT, SD_STREAM, Tensor_Det, Tensor_Prod). A final output of the merged streamlines is returned to the user for further analysis.
+The App generates a single set of streamlines from multiple diffusion-signal models in the voxel (Tensor or CSD) and tractography algorithm (iFOD1, iFOD2, FACT, SD_STREAM, Tensor_Det, Tensor_Prod). The App alows computing CSD-based streamlines using different $l_{max}$ values. Streamlines are combined into a single track.tck file at the end of the tracking process. The Tensor, CSD, and Kurtosis (if input data is multishell) fit parameters are returned as an output as well. 
 
-** IMPORTANT **
-This code is used in multiple apps, some of which restrict the options available to the user. This is to more easily reproduce desired outputs for specific use cases (networks, specific features in the anatomy, etc.). The same code is run, but some parameters may have been fixed by the developer based on their work for a specific use. 
+** IMPORTANT NOTE for DEVELOPERS **
 
-The CSD-based models can be computed at different $l_{max}$ values. All candidate streamlines are combined into a single track.tck file.
+This code is used in multiple brainlife.io/apps. FSome Apps simply use the code with different default parameters, others limit the or differ in the number of availbale inputs or parameters. As a result pull requests to this repository will need to cross checked across different Apps and might take longer time to go throuh or even not been able to go through. A list of all the Apps using this code is provided at the bottom of this readme.
 
-Additionally, the Tensor (and Kurtosis if data is multishell) and the CSD models are stored as well.
-
-This is a replacement for older processes (https://doi.org/10.25663/bl.app.33).
-
-### Authors
+### Author
 - [Brent McPherson](bcmcpher@iu.edu)
 
-### Contributors
+### Contributor
 - [Soichi Hayashi](hayashis@iu.edu)
 
 ### Project Director
