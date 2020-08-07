@@ -18,10 +18,10 @@ This code is used in multiple brainlife.io/apps. FSome Apps simply use the code 
 - [Soichi Hayashi](hayashis@iu.edu)
 
 ### Project Director
-- Franco Pestilli (frakkopesto@gmail.com)
+- [Franco Pestilli](frakkopesto@gmail.com)
 
 ### Funding Acknowledgement
-brainlife.io is publicly funded and for the sustainability of the project it is helpful to Acknowledge the use of the platform. We kindly ask that you acknowledge the funding below in your publications.
+brainlife.io is publicly funded and for the sustainability of the project it is helpful to Acknowledge the use of the platform. We kindly ask that you acknowledge the funding below in your publications and software.
 
 [![NSF-BCS-1734853](https://img.shields.io/badge/NSF_BCS-1734853-blue.svg)](https://nsf.gov/awardsearch/showAward?AWD_ID=1734853)
 [![NSF-BCS-1636893](https://img.shields.io/badge/NSF_BCS-1636893-blue.svg)](https://nsf.gov/awardsearch/showAward?AWD_ID=1636893)
