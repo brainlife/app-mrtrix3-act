@@ -7,5 +7,5 @@ else
     walltime=16:00:00
 fi
 
-echo "#PBS -l nodes=1:ppn=8,vmem=28gb"
+echo "#PBS -l nodes=1:ppn=12,vmem=28gb"
 echo "#PBS -l walltime=$walltime"
