@@ -318,9 +318,10 @@ echo "Creating 5-Tissue-Type (5TT) tracking mask..."
 5tt2vis 5tt.mif 5ttvis.mif -force -nthreads $NCORE -quiet
 
 ## create mask where 0.45<FA<0.55 (cc_mask for GE)
-mrthreshold -abs 0.45 fa.mif fa_ge045.mif
-mrthreshold -abs 0.55 -invert fa.mif  fa_le055.mif
-mrcalc fa_ge045.mif fa_le055.mif -mult cc_mask.mif
+#mrthreshold -abs 0.45 fa.mif fa_ge045.mif
+#mrthreshold -abs 0.55 -invert fa.mif  fa_le055.mif
+#mrcalc fa_ge045.mif fa_le055.mif -mult cc_mask.mif
+maskfilter ${mask}.mif erode -npass 7 - | mrmult fa.mif - - | threshold - -abs 0.4 cc_mask.mif
 
 if [ $MS -eq 0 ]; then
 
