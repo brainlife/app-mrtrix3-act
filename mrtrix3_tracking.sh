@@ -320,7 +320,7 @@ echo "Creating 5-Tissue-Type (5TT) tracking mask..."
 ## create mask where 0.45<FA<0.55 (cc_mask for GE)
 mrthreshold -abs 0.45 fa.mif fa_ge045.mif
 mrthreshold -abs 0.55 -invert fa.mif  fa_le055.mif
-mrcalc fa_ge045.mif fa_le055.mif -and cc_mask.mif
+mrcalc fa_ge045.mif fa_le055.mif -mult cc_mask.mif
 
 if [ $MS -eq 0 ]; then
 
