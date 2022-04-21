@@ -584,6 +584,10 @@ fi
 ## simple summary text
 tckinfo track.tck > tckinfo.txt
 
+# create symlink for newly registered app
+mkdir -p track
+ln -s ../track.tck track/track.tck
+
 ##
 ## convert outputs to save to nifti
 ##
