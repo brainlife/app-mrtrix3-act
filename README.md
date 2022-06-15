@@ -3,7 +3,7 @@
 
 # app-mrtrix3-act
 
-This app uses MRTrix3 to create **R**eprocible **A**natomically **C**onstrained **E**nsemble **Track**ing (RACE-Track).
+This app uses MRTrix3 to create **R**eproducible **A**natomically **C**onstrained **E**nsemble **Track**ing (RACE-Track).
 
 The app generates a set of streamlines for every requested tractography model (Tensor or CSD) and algorithm (iFOD1, iFOD2, FACT, SD_STREAM, Tensor_Det, Tensor_Prod). A final output of the merged streamlines is returned to the user for further analysis.
 
