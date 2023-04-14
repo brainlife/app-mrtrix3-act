@@ -6,7 +6,7 @@ NCORE=8
 #number of max seconds to run tckgen.
 #sometime tckgen gets stuck running for hours.. with no hope of finding enough fiber.
 #we don't want to waste computing hours when this happen as this App has a long walltime (36 hours)
-TCKGEN_TIMEOUT=7200
+TCKGEN_TIMEOUT=24000
 
 ## export more log messages
 set -x
