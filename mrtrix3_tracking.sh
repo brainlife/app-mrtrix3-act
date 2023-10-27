@@ -605,22 +605,23 @@ done
 cp wmt.txt response.txt
 
 ## tensor outputs
-mrconvert fa.mif -stride 1,2,3,4 fa.nii.gz -force -nthreads $NCORE -quiet
-mrconvert md.mif -stride 1,2,3,4 md.nii.gz -force -nthreads $NCORE -quiet
-mrconvert ad.mif -stride 1,2,3,4 ad.nii.gz -force -nthreads $NCORE -quiet
-mrconvert rd.mif -stride 1,2,3,4 rd.nii.gz -force -nthreads $NCORE -quiet
+[ ! -d tensor ] && mkdir tensor
+mrconvert fa.mif -stride 1,2,3,4 fa.nii.gz -force -nthreads $NCORE -quiet && cp fa.nii.gz ./tensor/fa.nii.gz
+mrconvert md.mif -stride 1,2,3,4 md.nii.gz -force -nthreads $NCORE -quiet && cp fa.nii.gz ./tensor/md.nii.gz
+mrconvert ad.mif -stride 1,2,3,4 ad.nii.gz -force -nthreads $NCORE -quiet && cp fa.nii.gz ./tensor/ad.nii.gz
+mrconvert rd.mif -stride 1,2,3,4 rd.nii.gz -force -nthreads $NCORE -quiet && cp fa.nii.gz ./tensor/rd.nii.gz
 
 ## westin shapes (also tensor)
-mrconvert cl.mif -stride 1,2,3,4 cl.nii.gz -force -nthreads $NCORE -quiet
-mrconvert cp.mif -stride 1,2,3,4 cp.nii.gz -force -nthreads $NCORE -quiet
-mrconvert cs.mif -stride 1,2,3,4 cs.nii.gz -force -nthreads $NCORE -quiet
+mrconvert cl.mif -stride 1,2,3,4 cl.nii.gz -force -nthreads $NCORE -quiet && cp fa.nii.gz ./tensor/cl.nii.gz
+mrconvert cp.mif -stride 1,2,3,4 cp.nii.gz -force -nthreads $NCORE -quiet && cp fa.nii.gz ./tensor/cp.nii.gz
+mrconvert cs.mif -stride 1,2,3,4 cs.nii.gz -force -nthreads $NCORE -quiet && cp fa.nii.gz ./tensor/cs.nii.gz
 
 ## tensor itself
-mrconvert dt.mif -stride 1,2,3,4 tensor.nii.gz -force -nthreads $NCORE -quiet
+mrconvert dt.mif -stride 1,2,3,4 tensor.nii.gz -force -nthreads $NCORE -quiet && cp fa.nii.gz ./tensor/tensor.nii.gz
 
 ## kurtosis, if it exists
 if [ -f dk.mif ]; then
-    mrconvert dk.mif -stride 1,2,3,4 kurtosis.nii.gz -force -nthreads $NCORE -quiet
+    mrconvert dk.mif -stride 1,2,3,4 kurtosis.nii.gz -force -nthreads $NCORE -quiet && cp fa.nii.gz ./tensor/kurtosis.nii.gz
 fi
 
 ## 5 tissue type visualization
