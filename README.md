@@ -10,7 +10,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-lightgrey.svg" alt="MIT license"></a>
 </p>
 
-## 🧠 At a glance
+## At a glance
 
 <!-- brainlife-app:begin (generated from the App manifest; edit the manifest, not this block) -->
 
@@ -20,19 +20,19 @@ Runs the same RACE-Track code as the MRtrix3 ACT App (FSL bet mask, 5ttgen fsl, 
 
 | | |
 |---|---|
-| 📥 **Inputs** | `neuro/dwi` · `neuro/anat/t1w` |
-| 📤 **Outputs** | `neuro/track/tck` · `neuro/tensor` · `neuro/csd` |
-| 🐳 **Container** | `brainlife/mrtrix3:3.0_RC3` |
-| 🔗 **Run it** | [doi.org/10.25663/brainlife.app.319](https://doi.org/10.25663/brainlife.app.319) |
+| **Inputs** | `neuro/dwi` · `neuro/anat/t1w` |
+| **Outputs** | `neuro/track/tck` · `neuro/tensor` · `neuro/csd` |
+| **Container** | `brainlife/mrtrix3:3.0_RC3` |
+| **Run it** | [doi.org/10.25663/brainlife.app.319](https://doi.org/10.25663/brainlife.app.319) |
 
-#### 📥 Inputs
+#### Inputs
 
 | Input | Datatype | Required | Description |
 |---|---|---|---|
 | `dwi` | `neuro/dwi` (preprocessed) | yes | Preprocessed DWI with bvecs and bvals. Must contain b=0 volumes; single- or multi-shell. |
 | `anat` | `neuro/anat/t1w` | yes | T1-weighted image aligned to the DWI, used by 5ttgen fsl to build the five-tissue-type image for ACT. If already skull-stripped, set premask to true. |
 
-#### 📤 Outputs
+#### Outputs
 
 | Output | Datatype | Description |
 |---|---|---|
@@ -41,7 +41,7 @@ Runs the same RACE-Track code as the MRtrix3 ACT App (FSL bet mask, 5ttgen fsl, 
 | `csd` | `neuro/csd` | CSD fibre orientation distributions per lmax (lmaxN.nii.gz), normalised when norm is true. |
 
 <details>
-<summary><b>⚙️ Parameters</b> (10)</summary>
+<summary><b>Parameters</b> (10)</summary>
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
@@ -60,7 +60,7 @@ Runs the same RACE-Track code as the MRtrix3 ACT App (FSL bet mask, 5ttgen fsl, 
 
 <!-- brainlife-app:end -->
 
-## 🏷️ Versions on brainlife.io
+## Versions on brainlife.io
 
 This repository implements **R**eproducible **A**natomically **C**onstrained **E**nsemble **Track**ing (RACE-Track). The same code runs in several Apps; some of them fix parameters to reproduce outputs for a specific use (networks, white matter tract segmentation, and so on).
 
@@ -75,13 +75,13 @@ This repository implements **R**eproducible **A**natomically **C**onstrained **E
 
 RACE-Track replaces the older tracking App [doi:10.25663/bl.app.33](https://doi.org/10.25663/bl.app.33).
 
-## 🚀 Running the App
+## Running the App
 
-### ☁️ On brainlife.io
+### On brainlife.io
 
 Open the App at [doi.org/10.25663/brainlife.app.319](https://doi.org/10.25663/brainlife.app.319) (or the full RACE-Track App at [doi.org/10.25663/bl.app.101](https://doi.org/10.25663/bl.app.101)), choose a preprocessed DWI dataset and a T1-weighted image aligned to it, set the options and press **Execute**. The tractogram (`neuro/track/tck`), the tensor maps (`neuro/tensor`) and the CSD fibre orientation distributions (`neuro/csd`) are archived to your project.
 
-### 💻 Locally
+### Locally
 
 You need [Singularity/Apptainer](https://apptainer.org/); MRtrix3, FSL and `jq` come from the `brainlife/mrtrix3` container that `main` pulls.
 
@@ -122,7 +122,7 @@ You need [Singularity/Apptainer](https://apptainer.org/); MRtrix3, FSL and `jq` 
    ./main
    ```
 
-### 🧪 Sample data
+### Sample data
 
 Download a T1-weighted image and a preprocessed DWI from brainlife.io with the [brainlife CLI](https://github.com/brainlife/cli):
 
@@ -134,7 +134,7 @@ bl dataset download 5a0e604116e499548135de87 && mv 5a0e604116e499548135de87 inpu
 bl dataset download 5a0dcb1216e499548135dd27 && mv 5a0dcb1216e499548135dd27 input/dwi
 ```
 
-## 📦 Outputs
+## Outputs
 
 ```text
 track.tck          merged tractogram across all requested algorithms, lmax and curvature values
@@ -149,7 +149,7 @@ mask.nii.gz        brain mask
 product.json       summary shown on brainlife.io
 ```
 
-## 🩺 Troubleshooting
+## Troubleshooting
 
 - **`iFOD2 Probabilistic tracking timed out with settings ...`**: a single `tckgen` run hit the time limit before reaching the requested count. Lower `num_fibers` or the number of lmax and curvature combinations.
 - **`Incorrect count. Tractography failed.`**: the merged tractogram has fewer streamlines than requested. Check the log for the `tckgen` run that fell short and adjust the tracking parameters.
@@ -157,7 +157,7 @@ product.json       summary shown on brainlife.io
 - **The DWI must contain b=0 volumes**; single- and multi-shell data are both supported. For multi-shell data, `tensor_fit` selects the shell used for the tensor fit; if that b-value is not present, all shells are used.
 - **Tensor maps in `tensor/`**: on branch `1.4` the code copies `fa.nii.gz` into every file of the `tensor/` folder, so only `tensor/fa.nii.gz` is correct there. The individual maps written at the top level (`md.nii.gz`, `rd.nii.gz`, …) are correct.
 
-## 📚 Citing
+## Citing
 
 > [!TIP]
 > If you use this App in your work, please cite the App, the software it builds on and brainlife.io (below). GitHub's **Cite this repository** button gives the App citation in APA and BibTeX.
@@ -172,13 +172,13 @@ product.json       summary shown on brainlife.io
 - Jenkinson et al. FSL. *NeuroImage* 62:782-790 (2012). [doi:10.1016/j.neuroimage.2011.09.015](https://doi.org/10.1016/j.neuroimage.2011.09.015)
 - Hayashi S, Caron BA, Heinsfeld AS, et al. brainlife.io: a decentralized and open-source cloud platform to support neuroscience research. *Nature Methods* 21:809–813 (2024). [doi:10.1038/s41592-024-02237-2](https://doi.org/10.1038/s41592-024-02237-2)
 
-## 👥 Authors
+## Authors
 
 - Brent McPherson
 
 **Contributors:** Soichi Hayashi, Anibal Sólon, Brad Caron, Dan Bullock, Giulia Bertò, Franco Pestilli
 
-## 💰 Funding
+## Funding
 
 [![Wellcome-226486/Z/22/Z](https://img.shields.io/badge/Wellcome-226486%2FZ%2F22%2FZ-purple.svg)](https://wellcome.org/)
 [![NIH-NINDS-U24NS140384](https://img.shields.io/badge/NIH_NINDS-U24NS140384-green.svg)](https://reporter.nih.gov/project-details/11261037)
@@ -197,6 +197,6 @@ product.json       summary shown on brainlife.io
 
 <sub>brainlife.io is publicly funded, and acknowledging that support helps keep it running. This App was developed with support from Wellcome, the U.S. National Institutes of Health (including the BRAIN Initiative BRAIN CONNECTS program: The Axonal Projectome EXchange, U24NS140384, and the Center for Mesoscale Connectomics, UM1NS132207) and the U.S. National Science Foundation.</sub>
 
-## ⚖️ License
+## License
 
 [MIT](LICENSE). Copyright (c) 2020 Brent McPherson, brainlife.io, Indiana University and The University of Texas at Austin. MRtrix3 and FSL are distributed under their own licenses.
